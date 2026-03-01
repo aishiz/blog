@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type Platform = {
 	id: string;
@@ -202,13 +202,25 @@ const css = {
 	} as React.CSSProperties,
 };
 
+function useIsMobile(breakpoint = 480) {
+	const [m, setM] = useState(false);
+	useEffect(() => {
+		const check = () => setM(window.innerWidth <= breakpoint);
+		check();
+		window.addEventListener('resize', check, { passive: true });
+		return () => window.removeEventListener('resize', check);
+	}, [breakpoint]);
+	return m;
+}
+
 export default function PlatformMatrix() {
 	const [selected, setSelected] = useState<string | null>(null);
+	const mobile = useIsMobile();
 
 	const filteredPlatforms = selected ? platforms.filter((p) => p.id === selected) : platforms;
 
 	return (
-		<div style={css.wrap}>
+		<div style={{ ...css.wrap, ...(mobile ? { padding: '1rem', margin: '1.25em 0' } : {}) }}>
 			<div style={css.title}>🖥️ Совместимость платформ</div>
 			<div style={css.desc}>
 				Выберите вашу платформу, чтобы увидеть какие движки доступны. Или смотрите всё сразу.
@@ -216,11 +228,12 @@ export default function PlatformMatrix() {
 
 			<div style={css.filters}>
 				<button style={css.filterBtn(!selected)} onClick={() => setSelected(null)}>
-					Все платформы
+					Все
 				</button>
 				{platforms.map((p) => (
 					<button key={p.id} style={css.filterBtn(selected === p.id)} onClick={() => setSelected(selected === p.id ? null : p.id)}>
-						{p.icon} {p.label}
+						{p.icon} {mobile ? '' : p.label}
+						{mobile && <span style={{ fontSize: '0.68rem' }}>{p.label.split(' ').pop()}</span>}
 					</button>
 				))}
 			</div>
@@ -242,13 +255,14 @@ export default function PlatformMatrix() {
 							style={{
 								...css.row,
 								...(hasAnySupport ? {} : { opacity: 0.4 }),
+								...(mobile ? { flexDirection: 'column' as const, alignItems: 'flex-start', gap: '0.5rem', padding: '0.65rem 0.75rem' } : {}),
 							}}
 						>
-							<span style={css.engineName(eng.color)}>{eng.engine}</span>
+							<span style={{ ...css.engineName(eng.color), ...(mobile ? { width: 'auto', fontSize: '0.82rem' } : {}) }}>{eng.engine}</span>
 							<div style={css.badges}>
 								{relevantPlatforms.map((p) => (
 									<span key={p.id} style={css.badge(p.support)} title={p.note}>
-										{supportStyles[p.support].icon} {p.label} <span style={css.tooltip}>({p.note})</span>
+										{supportStyles[p.support].icon} {mobile ? '' : p.label + ' '}<span style={css.tooltip}>({p.note})</span>
 									</span>
 								))}
 							</div>

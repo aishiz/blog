@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 const TOTAL_BLOCKS = 24;
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ec4899', '#7c3aed', '#06b6d4'];
@@ -152,10 +152,22 @@ const css = {
 	} as React.CSSProperties,
 };
 
+function useIsMobile(breakpoint = 480) {
+	const [m, setM] = useState(false);
+	useEffect(() => {
+		const check = () => setM(window.innerWidth <= breakpoint);
+		check();
+		window.addEventListener('resize', check, { passive: true });
+		return () => window.removeEventListener('resize', check);
+	}, [breakpoint]);
+	return m;
+}
+
 export default function PagedAttentionDemo() {
 	const [step, setStep] = useState(1);
 	const [auto, setAuto] = useState(true);
 	const maxStep = 6;
+	const mobile = useIsMobile();
 
 	const advance = useCallback(() => {
 		setStep((s) => (s >= maxStep ? 1 : s + 1));
@@ -176,31 +188,31 @@ export default function PagedAttentionDemo() {
 	const pagedUtil = (pagedUsed / TOTAL_BLOCKS * 100).toFixed(0);
 
 	return (
-		<div style={css.wrap}>
-			<div style={css.title}>🧠 PagedAttention vs Наивный подход — визуализация</div>
+		<div style={{ ...css.wrap, ...(mobile ? { padding: '1rem', margin: '1.25em 0' } : {}) }}>
+			<div style={css.title}>🧠 PagedAttention vs Наивный подход</div>
 			<div style={css.desc}>
-				Слева — наивное выделение памяти (фрагментация, пустые блоки). Справа — PagedAttention (страничная аллокация без потерь). Каждый цвет — отдельный запрос.
+				{mobile ? 'Сверху — наивное выделение (фрагментация). Снизу — PagedAttention (без потерь).' : 'Слева — наивное выделение памяти (фрагментация, пустые блоки). Справа — PagedAttention (страничная аллокация без потерь). Каждый цвет — отдельный запрос.'}
 			</div>
 
-			<div style={css.comparison}>
+			<div style={{ ...css.comparison, ...(mobile ? { gridTemplateColumns: '1fr', gap: '1rem' } : {}) }}>
 				<div style={css.column}>
 					<div style={css.colTitle('#ef4444')}>❌ Наивный подход</div>
-					<div style={css.grid}>
+					<div style={{ ...css.grid, ...(mobile ? { gridTemplateColumns: 'repeat(8, 1fr)' } : {}) }}>
 						{naive.blocks.map((b, i) => (
 							<div key={i} style={css.cell(b.reqId, b.fragmented)} />
 						))}
 					</div>
-					<div style={css.stats}>
+					<div style={{ ...css.stats, ...(mobile ? { gap: '0.75rem' } : {}) }}>
 						<div style={css.stat}>
-							<span style={css.statVal('#ef4444')}>{naive.requests}</span>
+							<span style={{ ...css.statVal('#ef4444'), ...(mobile ? { fontSize: '1rem' } : {}) }}>{naive.requests}</span>
 							<span style={css.statLabel}>Запросов</span>
 						</div>
 						<div style={css.stat}>
-							<span style={css.statVal('#ef4444')}>{naive.wasted}</span>
-							<span style={css.statLabel}>Потеряно блоков</span>
+							<span style={{ ...css.statVal('#ef4444'), ...(mobile ? { fontSize: '1rem' } : {}) }}>{naive.wasted}</span>
+							<span style={css.statLabel}>Потеряно</span>
 						</div>
 						<div style={css.stat}>
-							<span style={css.statVal('#ef4444')}>{naiveUtil}%</span>
+							<span style={{ ...css.statVal('#ef4444'), ...(mobile ? { fontSize: '1rem' } : {}) }}>{naiveUtil}%</span>
 							<span style={css.statLabel}>Утилизация</span>
 						</div>
 					</div>
@@ -208,32 +220,32 @@ export default function PagedAttentionDemo() {
 
 				<div style={css.column}>
 					<div style={css.colTitle('#10b981')}>✅ PagedAttention</div>
-					<div style={css.grid}>
+					<div style={{ ...css.grid, ...(mobile ? { gridTemplateColumns: 'repeat(8, 1fr)' } : {}) }}>
 						{paged.blocks.map((b, i) => (
 							<div key={i} style={css.cell(b.reqId, b.fragmented)} />
 						))}
 					</div>
-					<div style={css.stats}>
+					<div style={{ ...css.stats, ...(mobile ? { gap: '0.75rem' } : {}) }}>
 						<div style={css.stat}>
-							<span style={css.statVal('#10b981')}>{paged.requests}</span>
+							<span style={{ ...css.statVal('#10b981'), ...(mobile ? { fontSize: '1rem' } : {}) }}>{paged.requests}</span>
 							<span style={css.statLabel}>Запросов</span>
 						</div>
 						<div style={css.stat}>
-							<span style={css.statVal('#10b981')}>{paged.wasted}</span>
-							<span style={css.statLabel}>Потеряно блоков</span>
+							<span style={{ ...css.statVal('#10b981'), ...(mobile ? { fontSize: '1rem' } : {}) }}>{paged.wasted}</span>
+							<span style={css.statLabel}>Потеряно</span>
 						</div>
 						<div style={css.stat}>
-							<span style={css.statVal('#10b981')}>{pagedUtil}%</span>
+							<span style={{ ...css.statVal('#10b981'), ...(mobile ? { fontSize: '1rem' } : {}) }}>{pagedUtil}%</span>
 							<span style={css.statLabel}>Утилизация</span>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div style={css.controls}>
-				<button style={css.btn()} onClick={() => { setStep((s) => Math.max(1, s - 1)); setAuto(false); }}>← Назад</button>
-				<button style={css.btn()} onClick={() => { advance(); setAuto(false); }}>Вперёд →</button>
-				<button style={css.btn(auto)} onClick={() => setAuto(!auto)}>
+			<div style={{ ...css.controls, ...(mobile ? { flexWrap: 'wrap' as const } : {}) }}>
+				<button style={{ ...css.btn(), ...(mobile ? { padding: '0.45rem 0.75rem', fontSize: '0.78rem' } : {}) }} onClick={() => { setStep((s) => Math.max(1, s - 1)); setAuto(false); }}>← Назад</button>
+				<button style={{ ...css.btn(), ...(mobile ? { padding: '0.45rem 0.75rem', fontSize: '0.78rem' } : {}) }} onClick={() => { advance(); setAuto(false); }}>Вперёд →</button>
+				<button style={{ ...css.btn(auto), ...(mobile ? { padding: '0.45rem 0.75rem', fontSize: '0.78rem' } : {}) }} onClick={() => setAuto(!auto)}>
 					{auto ? '⏸ Пауза' : '▶ Авто'}
 				</button>
 				<span style={css.stepLabel}>Шаг {step}/{maxStep}</span>

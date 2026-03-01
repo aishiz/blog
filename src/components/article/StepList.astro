@@ -66,4 +66,10 @@ const { steps } = Astro.props;
 	.step-text :global(code) {
 		font-size: 0.85em;
 	}
+
+	@media (max-width: 480px) {
+		.step { padding: 0.75rem 0.85rem; gap: 0.75rem; }
+		.step-num { width: 28px; height: 28px; font-size: 0.78rem; }
+		.step-text { font-size: 0.88rem; padding-top: 0.1rem; }
+	}
 </style>

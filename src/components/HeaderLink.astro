@@ -32,4 +32,11 @@ const isActive = href === pathname || href === '/' + (subpath?.[0] || '');
 		color: var(--accent-light);
 		background: var(--accent-glow);
 	}
+	@media (max-width: 600px) {
+		a {
+			padding: 0.6rem 0.8rem;
+			font-size: 0.95rem;
+			width: 100%;
+		}
+	}
 </style>

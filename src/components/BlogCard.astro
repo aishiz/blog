@@ -217,4 +217,40 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 			font-size: 1.1rem;
 		}
 	}
+
+	@media (max-width: 480px) {
+		.card {
+			border-radius: 12px;
+		}
+
+		.card:hover {
+			transform: none;
+		}
+
+		.card-body {
+			padding: 0.9rem 1rem 1.1rem;
+		}
+
+		.card h3 {
+			font-size: 1rem;
+		}
+
+		.card p {
+			font-size: 0.82rem;
+			-webkit-line-clamp: 2;
+		}
+
+		.card-link {
+			font-size: 0.8rem;
+			padding: 0.3rem 0;
+		}
+
+		.card-meta time {
+			font-size: 0.7rem;
+		}
+
+		.reading-time {
+			font-size: 0.7rem;
+		}
+	}
 </style>

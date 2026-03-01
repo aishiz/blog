@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type Step = {
 	question: string;
@@ -229,9 +229,21 @@ const css = {
 	} as React.CSSProperties,
 };
 
+function useIsMobile(breakpoint = 480) {
+	const [m, setM] = useState(false);
+	useEffect(() => {
+		const check = () => setM(window.innerWidth <= breakpoint);
+		check();
+		window.addEventListener('resize', check, { passive: true });
+		return () => window.removeEventListener('resize', check);
+	}, [breakpoint]);
+	return m;
+}
+
 export default function EngineDecisionTree() {
 	const [history, setHistory] = useState<{ stepId: number; choiceLabel: string }[]>([]);
 	const [current, setCurrent] = useState<number | string>(0);
+	const mobile = useIsMobile();
 
 	const handleChoice = (label: string, next: number | string) => {
 		if (typeof current === 'number') {
@@ -264,7 +276,7 @@ export default function EngineDecisionTree() {
 	const result = typeof current === 'string' ? results[current] : null;
 
 	return (
-		<div style={css.wrap}>
+		<div style={{ ...css.wrap, ...(mobile ? { padding: '1rem', margin: '1.25em 0' } : {}) }}>
 			<div style={css.title}>🧭 Мастер выбора движка</div>
 			<div style={css.desc}>
 				Ответьте на несколько вопросов — получите рекомендацию с командой для запуска.
@@ -277,7 +289,7 @@ export default function EngineDecisionTree() {
 						<span key={i} style={{ display: 'contents' }}>
 							<span style={css.arrow}>→</span>
 							<button style={css.crumb(i < history.length - 1 || isResult)} onClick={() => goBack(i + 1)}>
-								{h.choiceLabel}
+								{mobile && h.choiceLabel.length > 20 ? h.choiceLabel.slice(0, 18) + '…' : h.choiceLabel}
 							</button>
 						</span>
 					))}
@@ -286,12 +298,12 @@ export default function EngineDecisionTree() {
 
 			{step && (
 				<>
-					<div style={css.question}>{step.question}</div>
+					<div style={{ ...css.question, ...(mobile ? { fontSize: '1rem' } : {}) }}>{step.question}</div>
 					<div style={css.options}>
 						{step.options.map((opt, i) => (
 							<button
 								key={i}
-								style={css.option}
+								style={{ ...css.option, ...(mobile ? { padding: '0.75rem 0.85rem', fontSize: '0.85rem' } : {}) }}
 								onClick={() => handleChoice(opt.label, opt.next)}
 								onMouseEnter={(e) => {
 									e.currentTarget.style.borderColor = 'var(--accent)';
@@ -312,14 +324,14 @@ export default function EngineDecisionTree() {
 
 			{result && (
 				<>
-					<div style={css.result(result.color)}>
-						<div style={css.resultEngine(result.color)}>→ {result.engine}</div>
-						<div style={css.resultWhy}>{result.why}</div>
+					<div style={{ ...css.result(result.color), ...(mobile ? { padding: '1rem' } : {}) }}>
+						<div style={{ ...css.resultEngine(result.color), ...(mobile ? { fontSize: '1.25rem' } : {}) }}>→ {result.engine}</div>
+						<div style={{ ...css.resultWhy, ...(mobile ? { fontSize: '0.85rem' } : {}) }}>{result.why}</div>
 						<div style={css.resultMeta}>
 							<span style={css.resultTag(result.color)}>Рекомендация</span>
 							<span style={css.resultTag('#64748b')}>Альтернатива: {result.runner_up}</span>
 						</div>
-						<div style={css.resultCmd}>{result.cmd}</div>
+						<div style={{ ...css.resultCmd, ...(mobile ? { fontSize: '0.75rem', padding: '0.6rem 0.75rem' } : {}) }}>{result.cmd}</div>
 					</div>
 					<button
 						style={css.resetBtn}

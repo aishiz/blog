@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type Scenario = {
 	name: string;
@@ -162,13 +162,25 @@ const css = {
 	} as React.CSSProperties,
 };
 
+function useIsMobile(breakpoint = 480) {
+	const [m, setM] = useState(false);
+	useEffect(() => {
+		const check = () => setM(window.innerWidth <= breakpoint);
+		check();
+		window.addEventListener('resize', check, { passive: true });
+		return () => window.removeEventListener('resize', check);
+	}, [breakpoint]);
+	return m;
+}
+
 export default function InferenceBenchmark() {
 	const [selected, setSelected] = useState(0);
 	const scenario = scenarios[selected];
 	const maxVal = Math.max(...scenario.data.map((d) => d.value));
+	const mobile = useIsMobile();
 
 	return (
-		<div style={css.wrap}>
+		<div style={{ ...css.wrap, ...(mobile ? { padding: '1rem', margin: '1.25em 0' } : {}) }}>
 			<div style={css.title}>📊 Бенчмарки инференс-движков</div>
 			<div style={css.desc}>
 				Сравнение производительности на актуальных моделях. Полосатые бары — оптимизированная конфигурация.
@@ -182,12 +194,21 @@ export default function InferenceBenchmark() {
 				))}
 			</div>
 
-			<div style={css.scenarioTitle}>{scenario.name}</div>
+			<div style={{ ...css.scenarioTitle, ...(mobile ? { fontSize: '0.92rem' } : {}) }}>{scenario.name}</div>
 			<div style={css.scenarioDesc}>{scenario.description}</div>
 
 			{scenario.data.map((d, i) => {
 				const pct = (d.value / maxVal) * 100;
-				return (
+				return mobile ? (
+					<div key={i} style={{ marginBottom: '0.65rem' }}>
+						<div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>{d.engine}</div>
+						<div style={css.barTrack}>
+							<div style={{ ...css.barFill(Math.max(pct, 12), d.color, !!d.optimized), height: '28px' }}>
+								<span style={{ ...css.barVal, fontSize: '0.72rem' }}>{d.label} {scenario.unit}</span>
+							</div>
+						</div>
+					</div>
+				) : (
 					<div key={i} style={css.barRow}>
 						<div style={css.barLabel}>{d.engine}</div>
 						<div style={css.barTrack}>
@@ -199,7 +220,7 @@ export default function InferenceBenchmark() {
 				);
 			})}
 
-			<div style={css.legend}>
+			<div style={{ ...css.legend, ...(mobile ? { flexDirection: 'column' as const, gap: '0.35rem' } : {}) }}>
 				<span>■ Сплошная заливка — baseline</span>
 				<span>▧ Полосатая заливка — оптимизированная конфигурация</span>
 			</div>

@@ -287,11 +287,23 @@ function formatDate(d: Date) {
 
 		.hero-avatar img { width: 140px; height: 140px; border-radius: 16px; }
 		.hero-text h1 { font-size: 1.85rem; }
-		.hero-text p { max-width: none; }
+		.hero-text p { max-width: none; font-size: 0.95rem; }
 		.hero-actions { justify-content: center; flex-wrap: wrap; }
 		.post-count { width: 100%; text-align: center; margin-left: 0; }
 		.posts-grid { grid-template-columns: 1fr; }
 		.section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+	}
+
+	@media (max-width: 400px) {
+		.hero { padding: 2rem 0 1.5rem; gap: 1.25rem; }
+		.hero-avatar img { width: 120px; height: 120px; border-radius: 14px; }
+		.hero-text h1 { font-size: 1.55rem; }
+		.hero-text p { font-size: 0.9rem; margin-bottom: 1.25rem; }
+		.hero-badge { font-size: 0.7rem; padding: 0.2rem 0.65rem; margin-bottom: 0.65rem; }
+		.cta-button { padding: 0.6rem 1.25rem; font-size: 0.85rem; }
+		.secondary-button { padding: 0.6rem 1.1rem; font-size: 0.85rem; }
+		.section-header h2 { font-size: 1.15rem; }
+		.recent-posts { padding-top: 2rem; }
 	}
 
 	@media (min-width: 551px) and (max-width: 768px) {

@@ -2,14 +2,24 @@ import { useState, useEffect } from 'react';
 
 export default function ScrollToTop() {
 	const [visible, setVisible] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
 
 	useEffect(() => {
 		const onScroll = () => setVisible(window.scrollY > 400);
+		const checkMobile = () => setIsMobile(window.innerWidth <= 480);
+		checkMobile();
 		window.addEventListener('scroll', onScroll, { passive: true });
-		return () => window.removeEventListener('scroll', onScroll);
+		window.addEventListener('resize', checkMobile, { passive: true });
+		return () => {
+			window.removeEventListener('scroll', onScroll);
+			window.removeEventListener('resize', checkMobile);
+		};
 	}, []);
 
 	if (!visible) return null;
+
+	const size = isMobile ? '40px' : '44px';
+	const offset = isMobile ? '1rem' : '2rem';
 
 	return (
 		<button
@@ -17,10 +27,10 @@ export default function ScrollToTop() {
 			aria-label="Наверх"
 			style={{
 				position: 'fixed',
-				bottom: '2rem',
-				right: '2rem',
-				width: '44px',
-				height: '44px',
+				bottom: offset,
+				right: offset,
+				width: size,
+				height: size,
 				borderRadius: '50%',
 				border: '1px solid var(--border-light)',
 				background: 'var(--bg-card)',

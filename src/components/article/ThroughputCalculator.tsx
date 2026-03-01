@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type GPU = { name: string; vram: number; bf16_tflops: number; tier: string };
 type Model = { name: string; params: number; activeParams: number; isMoE: boolean };
@@ -200,11 +200,23 @@ const css = {
 	} as React.CSSProperties,
 };
 
+function useIsMobile(breakpoint = 480) {
+	const [m, setM] = useState(false);
+	useEffect(() => {
+		const check = () => setM(window.innerWidth <= breakpoint);
+		check();
+		window.addEventListener('resize', check, { passive: true });
+		return () => window.removeEventListener('resize', check);
+	}, [breakpoint]);
+	return m;
+}
+
 export default function ThroughputCalculator() {
 	const [gpuIdx, setGpuIdx] = useState(3);
 	const [modelIdx, setModelIdx] = useState(0);
 	const [quantIdx, setQuantIdx] = useState(0);
 	const [gpuCount, setGpuCount] = useState(1);
+	const mobile = useIsMobile();
 
 	const gpu = gpus[gpuIdx];
 	const model = models[modelIdx];
@@ -220,41 +232,57 @@ export default function ThroughputCalculator() {
 	const vramPct = (vramNeeded / vramAvailable) * 100;
 	const fits = vramNeeded <= vramAvailable;
 
+	const mobileSelect: React.CSSProperties = mobile ? {
+		fontSize: '0.82rem',
+		padding: '0.5rem 0.6rem',
+		width: '100%',
+		maxWidth: '100%',
+		boxSizing: 'border-box' as const,
+	} : {};
+
 	return (
-		<div style={css.wrap}>
+		<div style={{
+			...css.wrap,
+			...(mobile ? { padding: '0.85rem', margin: '1.25em -0.25rem', borderRadius: '10px' } : {}),
+		}}>
 			<div style={css.title}>⚡ Калькулятор производительности</div>
-			<div style={css.desc}>
-				Выберите модель, GPU и квантизацию — получите оценку throughput для каждого движка и требования к VRAM.
+			<div style={{ ...css.desc, ...(mobile ? { fontSize: '0.82rem', marginBottom: '1rem' } : {}) }}>
+				Выберите модель, GPU и квантизацию — получите оценку throughput.
 			</div>
 
-			<div style={css.selectors}>
+			<div style={{
+				...css.selectors,
+				...(mobile ? { gridTemplateColumns: '1fr', gap: '0.5rem' } : {}),
+			}}>
 				<div style={css.selectGroup}>
 					<span style={css.label}>Модель</span>
-					<select style={css.select} value={modelIdx} onChange={(e) => setModelIdx(Number(e.target.value))}>
+					<select style={{ ...css.select, ...mobileSelect }} value={modelIdx} onChange={(e) => setModelIdx(Number(e.target.value))}>
 						{models.map((m, i) => (
 							<option key={i} value={i}>{m.name}</option>
 						))}
 					</select>
 				</div>
-				<div style={css.selectGroup}>
-					<span style={css.label}>GPU</span>
-					<select style={css.select} value={gpuIdx} onChange={(e) => setGpuIdx(Number(e.target.value))}>
-						{gpus.map((g, i) => (
-							<option key={i} value={i}>{g.name}</option>
-						))}
-					</select>
-				</div>
-				<div style={css.selectGroup}>
-					<span style={css.label}>Количество GPU</span>
-					<select style={css.select} value={gpuCount} onChange={(e) => setGpuCount(Number(e.target.value))}>
-						{[1, 2, 4, 8].map((n) => (
-							<option key={n} value={n}>{n}× GPU</option>
-						))}
-					</select>
+				<div style={{ display: 'flex', gap: '0.5rem' }}>
+					<div style={{ ...css.selectGroup, flex: 1, minWidth: 0 }}>
+						<span style={css.label}>GPU</span>
+						<select style={{ ...css.select, ...mobileSelect }} value={gpuIdx} onChange={(e) => setGpuIdx(Number(e.target.value))}>
+							{gpus.map((g, i) => (
+								<option key={i} value={i}>{g.name}</option>
+							))}
+						</select>
+					</div>
+					<div style={{ ...css.selectGroup, ...(mobile ? { width: '80px', flexShrink: 0 } : { flex: 1, minWidth: 0 }) }}>
+						<span style={css.label}>{mobile ? 'GPU ×' : 'Кол-во GPU'}</span>
+						<select style={{ ...css.select, ...mobileSelect }} value={gpuCount} onChange={(e) => setGpuCount(Number(e.target.value))}>
+							{[1, 2, 4, 8].map((n) => (
+								<option key={n} value={n}>{n}×</option>
+							))}
+						</select>
+					</div>
 				</div>
 				<div style={css.selectGroup}>
 					<span style={css.label}>Квантизация</span>
-					<select style={css.select} value={quantIdx} onChange={(e) => setQuantIdx(Number(e.target.value))}>
+					<select style={{ ...css.select, ...mobileSelect }} value={quantIdx} onChange={(e) => setQuantIdx(Number(e.target.value))}>
 						{quantOptions.map((q, i) => (
 							<option key={i} value={i}>{q.label}</option>
 						))}
@@ -262,42 +290,68 @@ export default function ThroughputCalculator() {
 				</div>
 			</div>
 
-			<div style={css.vramBar}>
-				<div style={css.vramHeader}>
-					<span style={css.vramLabel}>
-						VRAM: {vramNeeded} ГБ нужно / {vramAvailable} ГБ доступно
-						{!fits && ` (нужно минимум ${estimates[0].gpusNeeded}× GPU)`}
+			<div style={{ ...css.vramBar, ...(mobile ? { padding: '0.65rem', marginTop: '0.85rem' } : {}) }}>
+				<div style={{
+					display: 'flex',
+					justifyContent: 'space-between',
+					alignItems: 'baseline',
+					marginBottom: '0.4rem',
+					flexWrap: 'wrap' as const,
+					gap: '0.15rem',
+				}}>
+					<span style={{ ...css.vramLabel, ...(mobile ? { fontSize: '0.7rem' } : {}) }}>
+						VRAM: {vramNeeded} / {vramAvailable} ГБ
+						{!fits && <span style={{ color: '#ef4444' }}> (мин. {estimates[0].gpusNeeded}×)</span>}
 					</span>
-					<span style={css.vramValue}>{vramPct.toFixed(0)}%</span>
+					<span style={{ ...css.vramValue, ...(mobile ? { fontSize: '0.72rem' } : {}) }}>{vramPct.toFixed(0)}%</span>
 				</div>
-				<div style={css.vramTrack}>
+				<div style={{ ...css.vramTrack, ...(mobile ? { height: '10px' } : {}) }}>
 					<div style={css.vramFill(vramPct, fits)} />
 				</div>
 			</div>
 
-			<div style={{ ...css.results, marginTop: '1.25rem' }}>
+			<div style={{ ...css.results, marginTop: '0.85rem', gap: '0.4rem' }}>
 				{estimates
 					.sort((a, b) => b.estimatedTPS - a.estimatedTPS)
 					.map(({ engine, fits: f, estimatedTPS, gpusNeeded }) => (
-						<div key={engine.name} style={css.resultRow(f, engine.color)}>
-							<span style={css.engineLabel(engine.color)}>{engine.name}</span>
-							<span style={css.tpsValue(f)}>~{estimatedTPS.toLocaleString()} tok/s</span>
-							<div style={css.meta}>
+						<div key={engine.name} style={{
+							...css.resultRow(f, engine.color),
+							...(mobile ? {
+								padding: '0.55rem 0.65rem',
+								gap: '0.25rem',
+								borderRadius: '8px',
+							} : {}),
+						}}>
+							<span style={{
+								...css.engineLabel(engine.color),
+								...(mobile ? { width: '65px', fontSize: '0.78rem' } : {}),
+							}}>{engine.name}</span>
+							<span style={{
+								...css.tpsValue(f),
+								...(mobile ? { fontSize: '0.88rem', minWidth: 'auto', flex: 1 } : {}),
+							}}>~{estimatedTPS.toLocaleString()}</span>
+							<div style={{ ...css.meta, ...(mobile ? { flex: 'none' as const, gap: '0.35rem' } : {}) }}>
 								{f ? (
-									<span style={css.metaTag('#10b981')}>✅ Влезает</span>
+									<span style={css.metaTag('#10b981')}>✅</span>
 								) : (
-									<span style={css.metaTag('#ef4444')}>❌ Нужно {gpusNeeded}× GPU</span>
+									<span style={css.metaTag('#ef4444')}>❌ {gpusNeeded}×</span>
 								)}
-								{model.isMoE && (
-									<span style={css.metaTag('#7c3aed')}>MoE: {model.activeParams}B активных</span>
+								{model.isMoE && !mobile && (
+									<span style={css.metaTag('#7c3aed')}>MoE: {model.activeParams}B</span>
 								)}
 							</div>
 						</div>
 					))}
 			</div>
 
-			<div style={css.disclaimer}>
-				* Приблизительная оценка на основе TFLOPS GPU, размера модели и типичного overhead движка. Реальная производительность зависит от batch size, длины контекста, конфигурации и нагрузки.
+			{model.isMoE && mobile && (
+				<div style={{ fontSize: '0.68rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+					MoE: {model.activeParams}B активных из {model.params}B
+				</div>
+			)}
+
+			<div style={{ ...css.disclaimer, ...(mobile ? { fontSize: '0.68rem', marginTop: '0.5rem' } : {}) }}>
+				* Оценка на основе TFLOPS, размера модели и overhead движка.
 			</div>
 		</div>
 	);

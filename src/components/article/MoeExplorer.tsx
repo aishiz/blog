@@ -97,9 +97,21 @@ function pickRandom(total: number, count: number): Set<number> {
 	return set;
 }
 
+function useIsMobile(breakpoint = 480) {
+	const [m, setM] = useState(false);
+	useEffect(() => {
+		const check = () => setM(window.innerWidth <= breakpoint);
+		check();
+		window.addEventListener('resize', check, { passive: true });
+		return () => window.removeEventListener('resize', check);
+	}, [breakpoint]);
+	return m;
+}
+
 export default function MoeExplorer() {
 	const [active, setActive] = useState<Set<number>>(() => pickRandom(TOTAL_EXPERTS, ACTIVE_COUNT));
 	const [auto, setAuto] = useState(true);
+	const mobile = useIsMobile();
 
 	const shuffle = useCallback(() => {
 		setActive(pickRandom(TOTAL_EXPERTS, ACTIVE_COUNT));
@@ -114,58 +126,79 @@ export default function MoeExplorer() {
 	const pct = ((ACTIVE_COUNT / TOTAL_EXPERTS) * 100).toFixed(1);
 
 	return (
-		<div style={css.wrap}>
-			<div style={css.title}>⚡ MoE Explorer — Mixture of Experts в действии</div>
-			<div style={css.desc}>
-				Каждый квадрат — один «эксперт». При обработке токена маршрутизатор активирует только <strong style={{ color: 'var(--text)' }}>{ACTIVE_COUNT} из {TOTAL_EXPERTS}</strong> экспертов.
-				Нажмите на сетку или кнопку, чтобы смоделировать новый токен.
+		<div style={{
+			...css.wrap,
+			...(mobile ? { padding: '0.85rem', margin: '1.25em -0.25rem', borderRadius: '10px' } : {}),
+		}}>
+			<div style={css.title}>⚡ MoE Explorer</div>
+			<div style={{ ...css.desc, ...(mobile ? { fontSize: '0.82rem', marginBottom: '1rem' } : {}) }}>
+				Каждый квадрат — «эксперт». Маршрутизатор активирует <strong style={{ color: 'var(--text)' }}>{ACTIVE_COUNT} из {TOTAL_EXPERTS}</strong>.
+				{!mobile && ' Нажмите на сетку или кнопку, чтобы смоделировать новый токен.'}
 			</div>
 
-			<div style={css.grid} onClick={() => { shuffle(); setAuto(false); }}>
+			<div
+				style={{
+					...css.grid,
+					...(mobile ? { gridTemplateColumns: 'repeat(8, 1fr)', gap: '3px', marginBottom: '1rem' } : {}),
+				}}
+				onClick={() => { shuffle(); setAuto(false); }}
+			>
 				{Array.from({ length: TOTAL_EXPERTS }, (_, i) => (
-					<div key={i} style={css.cell(active.has(i))}>
+					<div key={i} style={{
+						...css.cell(active.has(i)),
+						...(mobile ? { borderRadius: '4px', fontSize: '0.5rem' } : {}),
+					}}>
 						{active.has(i) ? '✓' : ''}
 					</div>
 				))}
 			</div>
 
-			<div style={css.stats}>
+			<div style={{
+				...css.stats,
+				...(mobile ? {
+					display: 'grid',
+					gridTemplateColumns: '1fr 1fr',
+					gap: '0.5rem',
+				} : {}),
+			}}>
 				<div style={css.stat}>
-					<span style={css.statVal}>{ACTIVE_COUNT}/{TOTAL_EXPERTS}</span>
-					<span style={css.statLabel}>Активных экспертов</span>
+					<span style={{ ...css.statVal, ...(mobile ? { fontSize: '1.1rem' } : {}) }}>{ACTIVE_COUNT}/{TOTAL_EXPERTS}</span>
+					<span style={css.statLabel}>Активных</span>
 				</div>
 				<div style={css.stat}>
-					<span style={css.statVal}>{pct}%</span>
+					<span style={{ ...css.statVal, ...(mobile ? { fontSize: '1.1rem' } : {}) }}>{pct}%</span>
 					<span style={css.statLabel}>Разреженность</span>
 				</div>
 				<div style={css.stat}>
-					<span style={css.statVal}>~{(ACTIVE_COUNT / TOTAL_EXPERTS * 397).toFixed(0)}B</span>
-					<span style={css.statLabel}>Активных параметров</span>
+					<span style={{ ...css.statVal, ...(mobile ? { fontSize: '1.1rem' } : {}) }}>~{(ACTIVE_COUNT / TOTAL_EXPERTS * 397).toFixed(0)}B</span>
+					<span style={css.statLabel}>Активных парам.</span>
 				</div>
 				<div style={css.stat}>
-					<span style={css.statVal}>{((1 - ACTIVE_COUNT / TOTAL_EXPERTS) * 100).toFixed(0)}%</span>
-					<span style={css.statLabel}>Экономия вычислений</span>
+					<span style={{ ...css.statVal, ...(mobile ? { fontSize: '1.1rem' } : {}) }}>{((1 - ACTIVE_COUNT / TOTAL_EXPERTS) * 100).toFixed(0)}%</span>
+					<span style={css.statLabel}>Экономия</span>
 				</div>
 			</div>
 
-			<button
-				style={css.btn}
-				onClick={() => { shuffle(); setAuto(false); }}
-				onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
-				onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
-			>
-				{auto ? '⏸ Остановить' : '🔄 Следующий токен'}
-			</button>
-			{!auto && (
+			<div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.85rem', flexWrap: 'wrap' as const }}>
 				<button
-					style={{ ...css.btn, marginLeft: '0.5rem' }}
-					onClick={() => setAuto(true)}
+					style={{ ...css.btn, marginTop: 0, ...(mobile ? { padding: '0.5rem 1rem', fontSize: '0.8rem' } : {}) }}
+					onClick={() => { shuffle(); setAuto(false); }}
 					onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
 					onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
 				>
-					▶ Авто
+					{auto ? '⏸ Стоп' : '🔄 Токен'}
 				</button>
-			)}
+				{!auto && (
+					<button
+						style={{ ...css.btn, marginTop: 0, ...(mobile ? { padding: '0.5rem 1rem', fontSize: '0.8rem' } : {}) }}
+						onClick={() => setAuto(true)}
+						onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; }}
+						onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; }}
+					>
+						▶ Авто
+					</button>
+				)}
+			</div>
 		</div>
 	);
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type Engine = {
 	name: string;
@@ -131,12 +131,24 @@ const css = {
 	} as React.CSSProperties,
 };
 
+function useIsMobile(breakpoint = 480) {
+	const [m, setM] = useState(false);
+	useEffect(() => {
+		const check = () => setM(window.innerWidth <= breakpoint);
+		check();
+		window.addEventListener('resize', check, { passive: true });
+		return () => window.removeEventListener('resize', check);
+	}, [breakpoint]);
+	return m;
+}
+
 export default function EngineCompare() {
 	const [selected, setSelected] = useState(0);
 	const engine = engines[selected];
+	const mobile = useIsMobile();
 
 	return (
-		<div style={css.wrap}>
+		<div style={{ ...css.wrap, ...(mobile ? { padding: '1rem', margin: '1.25em 0' } : {}) }}>
 			<div style={css.title}>⚙️ Интерактивное сравнение движков</div>
 			<div style={css.desc}>
 				Выберите движок, чтобы увидеть его характеристики. Каждый оптимизирован под свой сценарий.
@@ -144,14 +156,14 @@ export default function EngineCompare() {
 
 			<div style={css.tabs}>
 				{engines.map((e, i) => (
-					<button key={i} style={css.tab(i === selected, e.color)} onClick={() => setSelected(i)}>
+					<button key={i} style={{ ...css.tab(i === selected, e.color), ...(mobile ? { padding: '0.4rem 0.7rem', fontSize: '0.78rem' } : {}) }} onClick={() => setSelected(i)}>
 						{e.name}
 					</button>
 				))}
 			</div>
 
 			<div style={css.header(engine.color)}>
-				<span style={css.engineName(engine.color)}>{engine.name}</span>
+				<span style={{ ...css.engineName(engine.color), ...(mobile ? { fontSize: '1.15rem' } : {}) }}>{engine.name}</span>
 				<span style={css.starsBadge}>⭐ {engine.stars}</span>
 			</div>
 
@@ -159,9 +171,9 @@ export default function EngineCompare() {
 				{features.map((f) => {
 					const val = engine[f.key as keyof Engine];
 					return (
-						<div key={f.key} style={css.row}>
-							<span style={css.rowLabel}>{f.label}</span>
-							<span style={css.rowValue}>
+						<div key={f.key} style={{ ...css.row, ...(mobile ? { flexDirection: 'column' as const, alignItems: 'flex-start', gap: '0.25rem', padding: '0.55rem 0.75rem' } : {}) }}>
+							<span style={{ ...css.rowLabel, ...(mobile ? { width: 'auto', fontSize: '0.72rem' } : {}) }}>{f.label}</span>
+							<span style={{ ...css.rowValue, ...(mobile ? { fontSize: '0.82rem' } : {}) }}>
 								{typeof val === 'boolean' ? (
 									<span style={css.badge(val)}>{val ? '✓ Да' : '✗ Нет'}</span>
 								) : (
