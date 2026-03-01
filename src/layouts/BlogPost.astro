@@ -75,7 +75,7 @@ const breadcrumbSchema = {
 		<ReadingProgress client:load />
 		<ScrollToTop client:load />
 		<main>
-			<article>
+			<div class="article-top">
 				<nav class="breadcrumbs" aria-label="Навигация">
 					<ol>
 						<li><a href="/">Главная</a></li>
@@ -112,34 +112,45 @@ const breadcrumbSchema = {
 						<Image width={960} height={480} src={heroImage} alt={title} />
 					</div>
 				)}
+			</div>
 
-				<div class="prose">
-					<slot />
+			<aside class="toc" aria-label="Содержание">
+				<div class="toc-inner">
+					<span class="toc-title">Содержание</span>
+					<nav class="toc-nav" id="toc-nav"></nav>
 				</div>
+			</aside>
 
-				{(prevPost || nextPost) && (
-					<nav class="post-nav">
-						{prevPost ? (
-							<a href={`/blog/${prevPost.slug}/`} class="nav-link nav-prev">
-								<span class="nav-label">
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-									Предыдущая
-								</span>
-								<span class="nav-title">{prevPost.title}</span>
-							</a>
-						) : <div />}
-						{nextPost ? (
-							<a href={`/blog/${nextPost.slug}/`} class="nav-link nav-next">
-								<span class="nav-label">
-									Следующая
-									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-								</span>
-								<span class="nav-title">{nextPost.title}</span>
-							</a>
-						) : <div />}
-					</nav>
-				)}
-			</article>
+			<div class="article-content">
+				<article>
+					<div class="prose">
+						<slot />
+					</div>
+
+					{(prevPost || nextPost) && (
+						<nav class="post-nav">
+							{prevPost ? (
+								<a href={`/blog/${prevPost.slug}/`} class="nav-link nav-prev">
+									<span class="nav-label">
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+										Предыдущая
+									</span>
+									<span class="nav-title">{prevPost.title}</span>
+								</a>
+							) : <div />}
+							{nextPost ? (
+								<a href={`/blog/${nextPost.slug}/`} class="nav-link nav-next">
+									<span class="nav-label">
+										Следующая
+										<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+									</span>
+									<span class="nav-title">{nextPost.title}</span>
+								</a>
+							) : <div />}
+						</nav>
+					)}
+				</article>
+			</div>
 		</main>
 		<Footer />
 
@@ -225,11 +236,106 @@ const breadcrumbSchema = {
 			});
 		}
 
+		function initTOC() {
+			const nav = document.getElementById('toc-nav');
+			const tocEl = document.querySelector('.toc') as HTMLElement;
+			if (!nav || !tocEl) return;
+			nav.innerHTML = '';
+
+			function positionTOC() {
+				const mainEl = document.querySelector('main');
+				if (!mainEl || !tocEl) return;
+				const mainRect = mainEl.getBoundingClientRect();
+				const gap = 24;
+				const tocWidth = 220;
+				const left = mainRect.left - tocWidth - gap;
+				if (left < 8) {
+					tocEl.style.display = 'none';
+					return;
+				}
+				tocEl.style.display = '';
+				tocEl.style.left = left + 'px';
+			}
+
+			positionTOC();
+			window.addEventListener('resize', positionTOC);
+
+			const prose = document.querySelector('.prose');
+			if (prose) {
+				const showObserver = new IntersectionObserver((entries) => {
+					entries.forEach((entry) => {
+						if (entry.isIntersecting) {
+							tocEl.classList.add('visible');
+						} else if (entry.boundingClientRect.top > 0) {
+							tocEl.classList.remove('visible');
+						}
+					});
+				}, { threshold: 0, rootMargin: '-60px 0px 0px 0px' });
+				showObserver.observe(prose);
+			}
+
+			const headings = document.querySelectorAll('.prose h1, .prose h2, .prose h3');
+			if (headings.length === 0) {
+				const toc = document.querySelector('.toc') as HTMLElement;
+				if (toc) toc.style.display = 'none';
+				return;
+			}
+
+			headings.forEach((heading, i) => {
+				if (!heading.id) {
+					heading.id = 'heading-' + i;
+				}
+
+				const link = document.createElement('a');
+				link.href = '#' + heading.id;
+				link.textContent = heading.textContent || '';
+				link.className = 'toc-link';
+
+				const tag = heading.tagName.toLowerCase();
+				if (tag === 'h1') link.dataset.level = '1';
+				else if (tag === 'h2') link.dataset.level = '2';
+				else link.dataset.level = '3';
+
+				link.addEventListener('click', (e) => {
+					e.preventDefault();
+					heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					history.replaceState(null, '', '#' + heading.id);
+				});
+
+				nav.appendChild(link);
+			});
+
+			const links = nav.querySelectorAll('.toc-link');
+			const headingEls = Array.from(headings) as HTMLElement[];
+			const offset = 100;
+
+			function updateActive() {
+				let current = -1;
+				for (let i = 0; i < headingEls.length; i++) {
+					if (headingEls[i].getBoundingClientRect().top <= offset) {
+						current = i;
+					} else {
+						break;
+					}
+				}
+				links.forEach(l => l.classList.remove('active'));
+				if (current >= 0 && links[current]) {
+					links[current].classList.add('active');
+					links[current].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+				}
+			}
+
+			window.addEventListener('scroll', updateActive, { passive: true });
+			updateActive();
+		}
+
 		initCodeBlocks();
 		initLightbox();
+		initTOC();
 		document.addEventListener('astro:after-swap', () => {
 			initCodeBlocks();
 			initLightbox();
+			initTOC();
 		});
 	</script>
 	</body>
@@ -237,9 +343,65 @@ const breadcrumbSchema = {
 
 <style>
 	main {
+		position: relative;
 		max-width: var(--max-width);
 		margin: 0 auto;
 		padding: 0 2rem 4rem;
+	}
+
+	.article-top {
+		max-width: var(--max-width);
+		margin: 0 auto;
+	}
+
+	.article-content {
+		max-width: var(--max-width);
+	}
+
+	/* ---- TOC ---- */
+	.toc {
+		position: fixed;
+		top: 80px;
+		width: 220px;
+		max-height: calc(100vh - 100px);
+		overflow-y: auto;
+		scrollbar-width: thin;
+		scrollbar-color: var(--border) transparent;
+		opacity: 0;
+		transform: translateX(-8px);
+		transition: opacity 0.4s ease, transform 0.4s ease;
+		pointer-events: none;
+		z-index: 10;
+	}
+
+	.toc.visible {
+		opacity: 1;
+		transform: translateX(0);
+		pointer-events: auto;
+	}
+
+	.toc::-webkit-scrollbar {
+		width: 3px;
+	}
+
+	.toc::-webkit-scrollbar-thumb {
+		background: var(--border);
+		border-radius: 3px;
+	}
+
+	.toc-inner {
+		padding: 0.75rem 0;
+	}
+
+	.toc-title {
+		display: block;
+		font-size: 0.68rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.08em;
+		color: var(--text-muted);
+		margin-bottom: 0.75rem;
+		padding-left: 0.75rem;
 	}
 
 	.breadcrumbs {
@@ -556,6 +718,10 @@ const breadcrumbSchema = {
 		overflow: hidden;
 	}
 
+	@media (max-width: 1440px) {
+		.toc { display: none; }
+	}
+
 	@media (max-width: 768px) {
 		main { padding: 0 1.25rem 3rem; }
 		.article-header h1 { font-size: 1.65rem; }
@@ -564,6 +730,52 @@ const breadcrumbSchema = {
 </style>
 
 <style is:global>
+	.toc-nav {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.toc-link {
+		display: block;
+		padding: 0.3rem 0.75rem;
+		font-size: 0.8rem;
+		line-height: 1.4;
+		color: var(--text-muted);
+		text-decoration: none;
+		border-left: 2px solid transparent;
+		transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.toc-link[data-level="1"] {
+		font-weight: 600;
+		font-size: 0.82rem;
+		color: var(--text-secondary);
+	}
+
+	.toc-link[data-level="2"] {
+		font-weight: 500;
+	}
+
+	.toc-link[data-level="3"] {
+		padding-left: 1.5rem;
+		font-size: 0.76rem;
+	}
+
+	.toc-link:hover {
+		color: var(--text);
+		border-left-color: var(--border-light);
+		background: var(--bg-card);
+	}
+
+	.toc-link.active {
+		color: var(--accent-light);
+		border-left-color: var(--accent);
+		font-weight: 600;
+	}
+
 	#img-lightbox {
 		position: fixed;
 		inset: 0;
