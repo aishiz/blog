@@ -1,62 +1,101 @@
-# Astro Starter Kit: Blog
+<div align="center">
 
-```sh
-npm create astro@latest -- --template blog
+<img src="src/assets/photo_2026-02-11_16-09-08.jpg" alt="ЭЙ АЙ ШИЗ" width="180" style="border-radius: 16px;" />
+
+# ЭЙ АЙ ШИЗ
+
+**Персональный блог о том, как жить с шизой по AI**
+
+AI-Agents · LLM · ML Inference · Квантизация · vLLM · RAG
+
+[![Astro](https://img.shields.io/badge/Astro-5.x-BC52EE?logo=astro&logoColor=white)](https://astro.build)
+[![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript&logoColor=white)](https://typescriptlang.org)
+[![MDX](https://img.shields.io/badge/MDX-1B1F24?logo=mdx&logoColor=white)](https://mdxjs.com)
+
+</div>
+
+---
+
+## О чём блог
+
+Пишу о том, с чем работаю каждый день: поднимаю LLM, собираю AI-агентов, оптимизирую инференс и квантизую модели, чтобы они влезали туда, куда не должны. Ночные сессии с vLLM, баги в продакшене и находки — всё сюда.
+
+## Что под капотом
+
+| | |
+|:--|:--|
+| **Фреймворк** | Astro.js 5 + React 19 |
+| **Контент** | MDX с кастомными интерактивными компонентами |
+| **Темы** | Тёмная / светлая / системная — без мерцания при загрузке |
+| **Код** | Shiki (GitHub-стиль), двойная тема, кнопка копирования |
+| **SEO** | JSON-LD (WebSite, Person, BlogPosting, BreadcrumbList), Open Graph, Twitter Cards |
+| **Фиды** | RSS, Sitemap |
+| **UI** | Lightbox, прогресс чтения, поиск, навигация между статьями, scroll-to-top |
+| **Шрифты** | Inter + JetBrains Mono |
+
+## Быстрый старт
+
+```bash
+git clone https://github.com/aishiz/blog.git
+cd blog
+npm install
+npm run dev
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Откроется на `http://localhost:4321`
 
-Features:
+| Команда | Что делает |
+|:--|:--|
+| `npm run dev` | Dev-сервер с hot reload |
+| `npm run build` | Production-сборка в `./dist/` |
+| `npm run preview` | Локальный превью сборки |
 
-- ✅ Minimal styling (make it your own!)
-- ✅ 100/100 Lighthouse performance
-- ✅ SEO-friendly with canonical URLs and OpenGraph data
-- ✅ Sitemap support
-- ✅ RSS Feed support
-- ✅ Markdown & MDX support
+## Структура
 
-## 🚀 Project Structure
-
-Inside of your Astro project, you'll see the following folders and files:
-
-```text
-├── public/
-├── src/
-│   ├── components/
-│   ├── content/
-│   ├── layouts/
-│   └── pages/
-├── astro.config.mjs
-├── README.md
-├── package.json
-└── tsconfig.json
+```
+src/
+├── assets/                # Изображения и медиа
+├── components/            # UI-компоненты
+│   ├── Header.astro       # Навигация + мобильное меню
+│   ├── ThemeToggle.astro  # Переключатель темы
+│   ├── SearchBar.tsx      # Поиск по статьям
+│   └── article/           # Компоненты для MDX-статей
+│       ├── Callout.astro        # Блоки info / warning / tip / fire
+│       ├── QuantCard.astro      # Карточки с бейджами
+│       ├── MemoryBar.astro      # Визуализация памяти
+│       ├── StepList.astro       # Нумерованные шаги
+│       └── VramCalculator.tsx   # Интерактивный калькулятор VRAM
+├── content/blog/          # MDX-статьи
+├── layouts/BlogPost.astro # Шаблон статьи
+├── pages/                 # Маршруты
+│   ├── index.astro        # Главная
+│   ├── about.astro        # Обо мне
+│   └── blog/              # Список + [slug]
+└── styles/global.css      # Глобальные стили и CSS-переменные
 ```
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
+## Как добавить статью
 
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
+Создайте `.mdx` файл в `src/content/blog/`:
 
-The `src/content/` directory contains "collections" of related Markdown and MDX documents. Use `getCollection()` to retrieve posts from `src/content/blog/`, and type-check your frontmatter using an optional schema. See [Astro's Content Collections docs](https://docs.astro.build/en/guides/content-collections/) to learn more.
+```mdx
+---
+title: 'Название статьи'
+description: 'Краткое описание для SEO'
+pubDate: 'Mar 01 2026'
+heroImage: '../../assets/your-image.png'
+---
 
-Any static assets, like images, can be placed in the `public/` directory.
+import Callout from '../../components/article/Callout.astro';
 
-## 🧞 Commands
+# Заголовок
 
-All commands are run from the root of the project, from a terminal:
+<Callout type="tip" title="Совет">
+Используйте кастомные компоненты для интерактивности.
+</Callout>
+```
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
+## Лицензия
 
-## 👀 Want to learn more?
-
-Check out [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
-
-## Credit
-
-This theme is based off of the lovely [Bear Blog](https://github.com/HermanMartinus/bearblog/).
+MIT
