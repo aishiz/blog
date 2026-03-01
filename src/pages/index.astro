@@ -1,0 +1,303 @@
+---
+import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import BlogCard from '../components/BlogCard.astro';
+import Footer from '../components/Footer.astro';
+import Header from '../components/Header.astro';
+import ScrollToTop from '../components/ScrollToTop';
+import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
+import avatar from '../assets/photo_2026-02-11_16-09-08.jpg';
+
+const allPosts = (await getCollection('blog'))
+	.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+
+function estimateReadingTime(body: string) {
+	const words = body.trim().split(/\s+/).length;
+	const minutes = Math.max(1, Math.round(words / 200));
+	return `${minutes} мин`;
+}
+
+const featured = allPosts[0];
+const rest = allPosts.slice(1, 5);
+
+function formatDate(d: Date) {
+	return d.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+---
+
+<!doctype html>
+<html lang="ru">
+	<head>
+		<BaseHead title={`${SITE_TITLE} — Блог об AI, LLM и ML Inference`} description="Блог Артемия об AI-агентах, LLM, ML Inference и квантизации моделей. Статьи, заметки и практический опыт работы с большими языковыми моделями.">
+			<script type="application/ld+json" set:html={JSON.stringify({
+				"@context": "https://schema.org",
+				"@type": "WebSite",
+				"name": SITE_TITLE,
+				"description": SITE_DESCRIPTION,
+				"url": Astro.site,
+				"inLanguage": "ru-RU",
+				"author": {
+					"@type": "Person",
+					"name": "Артемий",
+					"url": `${Astro.site}about`
+				},
+				"potentialAction": {
+					"@type": "SearchAction",
+					"target": `${Astro.site}blog?q={search_term_string}`,
+					"query-input": "required name=search_term_string"
+				}
+			})} />
+		</BaseHead>
+	</head>
+	<body>
+		<Header />
+		<ScrollToTop client:load />
+		<main>
+			<section class="hero" aria-label="О блоге">
+				<div class="hero-avatar">
+					<Image src={avatar} alt="Артемий — автор блога ЭЙ АЙ ШИЗ" width={280} height={280} />
+				</div>
+				<div class="hero-text">
+					<span class="hero-badge">Блог Артемия</span>
+					<h1>У вас начнётся <span class="gradient-text">ШИЗА</span></h1>
+					<p>
+						AI&#8209;Agents, LLM, ML&nbsp;Inference и ночные сессии с&nbsp;vLLM.
+						Пишу о&nbsp;технологиях, делюсь опытом и&nbsp;шизой.
+					</p>
+					<div class="hero-actions">
+						<a href="/blog" class="cta-button">
+							Все статьи
+							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M5 12h14M12 5l7 7-7 7" />
+							</svg>
+						</a>
+						<a href="/about" class="secondary-button">Обо мне</a>
+						<span class="post-count">{allPosts.length} {allPosts.length === 1 ? 'статья' : allPosts.length < 5 ? 'статьи' : 'статей'}</span>
+					</div>
+				</div>
+			</section>
+
+			<section class="recent-posts" aria-label="Последние статьи">
+				<div class="section-header">
+					<h2>Последние статьи</h2>
+					<a href="/blog" class="see-all">Смотреть все &rarr;</a>
+				</div>
+				<div class="posts-grid">
+					{featured && (
+						<BlogCard
+							title={featured.data.title}
+							description={featured.data.description}
+							date={formatDate(featured.data.pubDate)}
+							slug={featured.id}
+							heroImage={featured.data.heroImage?.src}
+							readingTime={estimateReadingTime(featured.body ?? '')}
+							featured={true}
+						/>
+					)}
+					{rest.map((post) => (
+						<BlogCard
+							title={post.data.title}
+							description={post.data.description}
+							date={formatDate(post.data.pubDate)}
+							slug={post.id}
+							heroImage={post.data.heroImage?.src}
+							readingTime={estimateReadingTime(post.body ?? '')}
+						/>
+					))}
+				</div>
+			</section>
+		</main>
+		<Footer />
+	</body>
+</html>
+
+<style>
+	main {
+		max-width: var(--max-width-wide);
+		margin: 0 auto;
+		padding: 0 2rem;
+	}
+
+	/* ---- HERO ---- */
+	.hero {
+		display: flex;
+		flex-direction: row !important;
+		align-items: center;
+		gap: 3rem;
+		padding: 4rem 0 3.5rem;
+	}
+
+	.hero-avatar {
+		position: relative;
+		flex-shrink: 0;
+	}
+
+	.hero-avatar img {
+		position: relative;
+		width: 200px;
+		height: 200px;
+		border-radius: 20px;
+		object-fit: cover;
+		border: 2px solid var(--border-light);
+	}
+
+	.hero-text {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.hero-badge {
+		display: inline-block;
+		padding: 0.25rem 0.8rem;
+		background: var(--accent-glow);
+		border: 1px solid rgba(255, 107, 43, 0.25);
+		border-radius: 100px;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--accent-light);
+		margin-bottom: 0.85rem;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.hero-text h1 {
+		font-size: 2.6rem;
+		font-weight: 900;
+		line-height: 1.1;
+		margin-bottom: 1rem;
+		letter-spacing: -0.02em;
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, var(--accent), var(--accent-yellow));
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.hero-text p {
+		font-size: 1.05rem;
+		color: var(--text-secondary);
+		line-height: 1.7;
+		margin-bottom: 1.5rem;
+		max-width: 480px;
+	}
+
+	.hero-actions {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+	}
+
+	.cta-button {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.65rem 1.5rem;
+		background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+		color: white;
+		border-radius: 100px;
+		font-weight: 700;
+		font-size: 0.88rem;
+		text-decoration: none;
+		transition: all 0.2s ease;
+		box-shadow: 0 4px 20px rgba(255, 107, 43, 0.2);
+	}
+
+	.cta-button:hover {
+		transform: translateY(-2px);
+		box-shadow: 0 6px 28px rgba(255, 107, 43, 0.3);
+		color: white;
+	}
+
+	.secondary-button {
+		display: inline-flex;
+		align-items: center;
+		padding: 0.65rem 1.3rem;
+		background: var(--bg-card);
+		color: var(--text-secondary);
+		border: 1px solid var(--border);
+		border-radius: 100px;
+		font-weight: 600;
+		font-size: 0.88rem;
+		text-decoration: none;
+		transition: all 0.2s ease;
+	}
+
+	.secondary-button:hover {
+		border-color: var(--border-light);
+		color: var(--text);
+		transform: translateY(-2px);
+	}
+
+	.post-count {
+		font-size: 0.82rem;
+		color: var(--text-muted);
+		font-weight: 500;
+		margin-left: 0.25rem;
+	}
+
+	/* ---- POSTS ---- */
+	.recent-posts {
+		padding: 0 0 4rem;
+		border-top: 1px solid var(--border);
+		padding-top: 2.5rem;
+	}
+
+	.section-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 1.5rem;
+	}
+
+	.section-header h2 {
+		font-size: 1.35rem;
+		font-weight: 800;
+	}
+
+	.see-all {
+		font-size: 0.85rem;
+		color: var(--accent-light);
+		font-weight: 500;
+		transition: color 0.2s ease;
+	}
+
+	.see-all:hover {
+		color: var(--accent);
+	}
+
+	.posts-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1.25rem;
+	}
+
+	/* ---- RESPONSIVE ---- */
+	@media (max-width: 550px) {
+		main { padding: 0 1rem; }
+
+		.hero {
+			flex-direction: column !important;
+			text-align: center;
+			gap: 1.5rem;
+			padding: 2.5rem 0 2rem;
+		}
+
+		.hero-avatar img { width: 140px; height: 140px; border-radius: 16px; }
+		.hero-text h1 { font-size: 1.85rem; }
+		.hero-text p { max-width: none; }
+		.hero-actions { justify-content: center; flex-wrap: wrap; }
+		.post-count { width: 100%; text-align: center; margin-left: 0; }
+		.posts-grid { grid-template-columns: 1fr; }
+		.section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+	}
+
+	@media (min-width: 551px) and (max-width: 768px) {
+		.hero { gap: 2rem; }
+		.hero-avatar img { width: 160px; height: 160px; border-radius: 18px; }
+		.hero-text h1 { font-size: 2rem; }
+		.posts-grid { grid-template-columns: 1fr; }
+	}
+</style>

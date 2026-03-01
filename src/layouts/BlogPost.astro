@@ -1,0 +1,603 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import BaseHead from '../components/BaseHead.astro';
+import CopyLink from '../components/CopyLink';
+import Footer from '../components/Footer.astro';
+import FormattedDate from '../components/FormattedDate.astro';
+import Header from '../components/Header.astro';
+import ReadingProgress from '../components/ReadingProgress';
+import ScrollToTop from '../components/ScrollToTop';
+import { SITE_TITLE, AUTHOR_NAME } from '../consts';
+
+type Props = CollectionEntry<'blog'>['data'] & {
+	readingTime?: string;
+	prevPost?: { title: string; slug: string };
+	nextPost?: { title: string; slug: string };
+};
+
+const { title, description, pubDate, updatedDate, heroImage, readingTime, prevPost, nextPost } = Astro.props;
+
+const canonicalURL = new URL(Astro.url.pathname, Astro.site);
+const imageURL = heroImage ? new URL(heroImage.src, Astro.site).toString() : undefined;
+
+const articleSchema = {
+	"@context": "https://schema.org",
+	"@type": "BlogPosting",
+	"headline": title,
+	"description": description,
+	"url": canonicalURL.toString(),
+	...(imageURL && { "image": imageURL }),
+	"datePublished": pubDate.toISOString(),
+	...(updatedDate && { "dateModified": updatedDate.toISOString() }),
+	"author": {
+		"@type": "Person",
+		"name": AUTHOR_NAME,
+		"url": new URL('/about', Astro.site).toString()
+	},
+	"publisher": {
+		"@type": "Organization",
+		"name": SITE_TITLE,
+		"url": Astro.site?.toString(),
+		"logo": {
+			"@type": "ImageObject",
+			"url": new URL('/apple-touch-icon.png', Astro.site).toString()
+		}
+	},
+	"mainEntityOfPage": {
+		"@type": "WebPage",
+		"@id": canonicalURL.toString()
+	},
+	"inLanguage": "ru-RU"
+};
+
+const breadcrumbSchema = {
+	"@context": "https://schema.org",
+	"@type": "BreadcrumbList",
+	"itemListElement": [
+		{ "@type": "ListItem", "position": 1, "name": "Главная", "item": Astro.site?.toString() },
+		{ "@type": "ListItem", "position": 2, "name": "Статьи", "item": new URL('/blog', Astro.site).toString() },
+		{ "@type": "ListItem", "position": 3, "name": title, "item": canonicalURL.toString() }
+	]
+};
+---
+
+<html lang="ru">
+	<head>
+		<BaseHead title={`${title} — ${SITE_TITLE}`} description={description} image={heroImage} type="article" publishedTime={pubDate} modifiedTime={updatedDate}>
+			<script type="application/ld+json" set:html={JSON.stringify(articleSchema)} />
+			<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+		</BaseHead>
+	</head>
+
+	<body>
+		<Header />
+		<ReadingProgress client:load />
+		<ScrollToTop client:load />
+		<main>
+			<article>
+				<nav class="breadcrumbs" aria-label="Навигация">
+					<ol>
+						<li><a href="/">Главная</a></li>
+						<li><a href="/blog">Статьи</a></li>
+						<li aria-current="page">{title}</li>
+					</ol>
+				</nav>
+				<div class="article-toolbar">
+					<a href="/blog" class="back-link">
+						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M19 12H5M12 19l-7-7 7-7" />
+						</svg>
+						Все статьи
+					</a>
+					<CopyLink client:load />
+				</div>
+
+				<header class="article-header">
+					<div class="meta">
+						<FormattedDate date={pubDate} />
+						{updatedDate && (
+							<span class="updated">&middot; обновлено <FormattedDate date={updatedDate} /></span>
+						)}
+						{readingTime && (
+							<span class="read-time">&middot; {readingTime}</span>
+						)}
+					</div>
+					<h1>{title}</h1>
+					<p class="description">{description}</p>
+				</header>
+
+				{heroImage && (
+					<div class="hero-image">
+						<Image width={960} height={480} src={heroImage} alt={title} />
+					</div>
+				)}
+
+				<div class="prose">
+					<slot />
+				</div>
+
+				{(prevPost || nextPost) && (
+					<nav class="post-nav">
+						{prevPost ? (
+							<a href={`/blog/${prevPost.slug}/`} class="nav-link nav-prev">
+								<span class="nav-label">
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
+									Предыдущая
+								</span>
+								<span class="nav-title">{prevPost.title}</span>
+							</a>
+						) : <div />}
+						{nextPost ? (
+							<a href={`/blog/${nextPost.slug}/`} class="nav-link nav-next">
+								<span class="nav-label">
+									Следующая
+									<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+								</span>
+								<span class="nav-title">{nextPost.title}</span>
+							</a>
+						) : <div />}
+					</nav>
+				)}
+			</article>
+		</main>
+		<Footer />
+
+		<script>
+			function initCodeBlocks() {
+				document.querySelectorAll('pre').forEach((pre) => {
+					if (pre.parentElement?.classList.contains('code-block')) return;
+
+					const code = pre.querySelector('code');
+					const dataLang = pre.getAttribute('data-language') || '';
+					const classAttr = code?.getAttribute('class') || '';
+					const langMatch = classAttr.match(/language-(\w+)/);
+					const lang = dataLang || (langMatch ? langMatch[1] : '');
+
+					const wrapper = document.createElement('div');
+					wrapper.className = 'code-block';
+
+					const header = document.createElement('div');
+					header.className = 'code-block-header';
+
+					const langSpan = document.createElement('span');
+					langSpan.className = 'code-block-lang';
+					langSpan.textContent = lang || 'code';
+
+					const copyBtn = document.createElement('button');
+					copyBtn.className = 'code-copy-btn';
+					copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Копировать`;
+
+					copyBtn.addEventListener('click', async () => {
+						const text = pre.querySelector('code')?.textContent || pre.textContent || '';
+						await navigator.clipboard.writeText(text);
+						copyBtn.classList.add('copied');
+						copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>Скопировано`;
+						setTimeout(() => {
+							copyBtn.classList.remove('copied');
+							copyBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Копировать`;
+						}, 2000);
+					});
+
+					header.appendChild(langSpan);
+					header.appendChild(copyBtn);
+
+					pre.parentNode!.insertBefore(wrapper, pre);
+					wrapper.appendChild(header);
+					wrapper.appendChild(pre);
+				});
+			}
+
+		function initLightbox() {
+			let overlay = document.getElementById('img-lightbox');
+			if (!overlay) {
+				overlay = document.createElement('div');
+				overlay.id = 'img-lightbox';
+				overlay.innerHTML = '<img />';
+				document.body.appendChild(overlay);
+
+				overlay.addEventListener('click', () => {
+					overlay!.classList.remove('active');
+					document.body.style.overflow = '';
+				});
+
+				document.addEventListener('keydown', (e) => {
+					if (e.key === 'Escape' && overlay!.classList.contains('active')) {
+						overlay!.classList.remove('active');
+						document.body.style.overflow = '';
+					}
+				});
+			}
+
+			const lbImg = overlay.querySelector('img')!;
+
+			document.querySelectorAll('.prose img, .hero-image img').forEach((img) => {
+				const el = img as HTMLImageElement;
+				el.style.cursor = 'zoom-in';
+				el.addEventListener('click', (e) => {
+					e.preventDefault();
+					e.stopPropagation();
+					lbImg.src = el.src;
+					lbImg.alt = el.alt;
+					overlay!.classList.add('active');
+					document.body.style.overflow = 'hidden';
+				});
+			});
+		}
+
+		initCodeBlocks();
+		initLightbox();
+		document.addEventListener('astro:after-swap', () => {
+			initCodeBlocks();
+			initLightbox();
+		});
+	</script>
+	</body>
+</html>
+
+<style>
+	main {
+		max-width: var(--max-width);
+		margin: 0 auto;
+		padding: 0 2rem 4rem;
+	}
+
+	.breadcrumbs {
+		margin-top: 1.5rem;
+	}
+
+	.breadcrumbs ol {
+		display: flex;
+		align-items: center;
+		gap: 0;
+		list-style: none;
+		padding: 0;
+		margin: 0;
+		font-size: 0.78rem;
+		color: var(--text-muted);
+	}
+
+	.breadcrumbs li {
+		display: flex;
+		align-items: center;
+	}
+
+	.breadcrumbs li:not(:last-child)::after {
+		content: '/';
+		margin: 0 0.5rem;
+		color: var(--border-light);
+	}
+
+	.breadcrumbs a {
+		color: var(--text-muted);
+		text-decoration: none;
+		transition: color 0.15s ease;
+	}
+
+	.breadcrumbs a:hover {
+		color: var(--accent-light);
+	}
+
+	.breadcrumbs li[aria-current="page"] {
+		color: var(--text-secondary);
+		font-weight: 500;
+		max-width: 300px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.article-toolbar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		margin: 0.75rem 0 1.75rem;
+	}
+
+	.back-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.4rem 0.85rem 0.4rem 0.6rem;
+		font-size: 0.85rem;
+		color: var(--text-muted);
+		text-decoration: none;
+		border: 1px solid var(--border);
+		border-radius: 100px;
+		background: var(--bg-card);
+		transition: all var(--transition);
+	}
+
+	.back-link:hover {
+		color: var(--accent-light);
+		border-color: var(--border-light);
+	}
+
+	.article-header {
+		margin-bottom: 2rem;
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 0.5rem;
+		font-size: 0.82rem;
+		color: var(--accent-light);
+		margin-bottom: 0.75rem;
+		font-weight: 500;
+	}
+
+	.updated {
+		color: var(--text-muted);
+		font-weight: 400;
+	}
+
+	.read-time {
+		color: var(--text-muted);
+		font-weight: 400;
+	}
+
+	.article-header h1 {
+		font-size: 2.35rem;
+		font-weight: 900;
+		line-height: 1.2;
+		margin-bottom: 0.75rem;
+		letter-spacing: -0.02em;
+	}
+
+	.description {
+		font-size: 1.12rem;
+		color: var(--text-secondary);
+		line-height: 1.65;
+		margin: 0;
+	}
+
+	.hero-image {
+		margin-bottom: 2.5rem;
+		border-radius: var(--radius);
+		overflow: hidden;
+		border: 1px solid var(--border);
+	}
+
+	.hero-image img {
+		width: 100%;
+		height: auto;
+		display: block;
+	}
+
+	/* ---- PROSE ---- */
+	.prose {
+		font-size: 1.1rem;
+		line-height: 1.9;
+		color: var(--text-secondary);
+		letter-spacing: 0.005em;
+		word-spacing: 0.02em;
+	}
+
+	.prose :global(h1) {
+		font-size: 1.85rem;
+		font-weight: 800;
+		margin: 2.75rem 0 1rem;
+		color: var(--text);
+		line-height: 1.25;
+	}
+
+	.prose :global(h2) {
+		font-size: 1.55rem;
+		font-weight: 800;
+		margin: 2.75rem 0 0.85rem;
+		color: var(--text);
+		padding-bottom: 0.5rem;
+		border-bottom: 1px solid var(--border);
+		line-height: 1.3;
+	}
+
+	.prose :global(h3) {
+		font-size: 1.25rem;
+		font-weight: 700;
+		margin: 2.25rem 0 0.7rem;
+		color: var(--text);
+		line-height: 1.35;
+	}
+
+	.prose :global(h4) {
+		font-size: 1.1rem;
+		font-weight: 700;
+		margin: 1.75rem 0 0.5rem;
+		color: var(--text);
+	}
+
+	.prose :global(p) {
+		margin-bottom: 1.5em;
+	}
+
+	.prose :global(img) {
+		border-radius: var(--radius-sm);
+		border: 1px solid var(--border);
+		margin: 1.75em 0;
+		display: block;
+	}
+
+	.prose :global(a) {
+		color: var(--accent-light);
+		text-decoration: underline;
+		text-underline-offset: 3px;
+		text-decoration-thickness: 1px;
+		text-decoration-color: rgba(255, 143, 77, 0.4);
+		transition: all 0.15s ease;
+	}
+
+	.prose :global(a:hover) {
+		color: var(--accent);
+		text-decoration-color: var(--accent);
+	}
+
+	.prose :global(strong) {
+		color: var(--text);
+		font-weight: 650;
+	}
+
+	.prose :global(em) {
+		color: var(--text-secondary);
+		font-style: italic;
+	}
+
+	.prose :global(.code-block) {
+		margin: 1.75em 0;
+	}
+
+	.prose :global(ul), .prose :global(ol) {
+		margin-bottom: 1.5em;
+		padding-left: 1.75em;
+	}
+
+	.prose :global(li) {
+		margin-bottom: 0.5em;
+		line-height: 1.8;
+	}
+
+	.prose :global(li > p) {
+		margin-bottom: 0.5em;
+	}
+
+	.prose :global(blockquote) {
+		margin: 1.75em 0;
+		padding: 1em 1.5em;
+		font-size: 1.05rem;
+	}
+
+	.prose :global(blockquote p:last-child) {
+		margin-bottom: 0;
+	}
+
+	.prose :global(hr) {
+		margin: 2.5em 0;
+	}
+
+	.prose :global(table) {
+		margin: 1.75em 0;
+		font-size: 0.95rem;
+	}
+
+	.prose :global(td) {
+		color: var(--text-secondary);
+		line-height: 1.6;
+	}
+
+	/* ---- POST NAVIGATION ---- */
+	.post-nav {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 1rem;
+		margin-top: 3rem;
+		padding-top: 2rem;
+		border-top: 1px solid var(--border);
+	}
+
+	.nav-link {
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+		padding: 1rem 1.25rem;
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-sm);
+		text-decoration: none;
+		transition: all var(--transition);
+	}
+
+	.nav-link:hover {
+		border-color: var(--border-light);
+		background: var(--bg-card-hover);
+		transform: translateY(-2px);
+		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+	}
+
+	.nav-link:hover .nav-label svg {
+		color: var(--accent);
+	}
+
+	.nav-prev:hover .nav-label svg {
+		transform: translateX(-3px);
+	}
+
+	.nav-next:hover .nav-label svg {
+		transform: translateX(3px);
+	}
+
+	.nav-next {
+		text-align: right;
+	}
+
+	.nav-label {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.3rem;
+		font-size: 0.75rem;
+		font-weight: 600;
+		color: var(--accent-light);
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.nav-label svg {
+		transition: transform 0.2s ease, color 0.2s ease;
+	}
+
+	.nav-title {
+		font-size: 0.9rem;
+		color: var(--text);
+		font-weight: 500;
+		line-height: 1.35;
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	@media (max-width: 768px) {
+		main { padding: 0 1.25rem 3rem; }
+		.article-header h1 { font-size: 1.65rem; }
+		.post-nav { grid-template-columns: 1fr; }
+	}
+</style>
+
+<style is:global>
+	#img-lightbox {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: rgba(0, 0, 0, 0.92);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		cursor: zoom-out;
+		opacity: 0;
+		visibility: hidden;
+		transition: opacity 0.25s ease, visibility 0.25s ease;
+	}
+
+	#img-lightbox.active {
+		opacity: 1;
+		visibility: visible;
+	}
+
+	#img-lightbox img {
+		max-width: 92vw;
+		max-height: 92vh;
+		object-fit: contain;
+		border-radius: 8px;
+		box-shadow: 0 8px 48px rgba(0, 0, 0, 0.6);
+		transform: scale(0.95);
+		transition: transform 0.25s ease;
+		border: none;
+		margin: 0;
+	}
+
+	#img-lightbox.active img {
+		transform: scale(1);
+	}
+</style>

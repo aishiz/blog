@@ -1,0 +1,93 @@
+---
+interface Props {
+	type?: 'info' | 'warning' | 'tip' | 'fire';
+	title?: string;
+}
+
+const { type = 'info', title } = Astro.props;
+
+const icons: Record<string, string> = {
+	info: '💡',
+	warning: '⚠️',
+	tip: '✅',
+	fire: '🔥',
+};
+
+const icon = icons[type] || icons.info;
+---
+
+<div class={`callout callout-${type}`}>
+	<div class="callout-header">
+		<span class="callout-icon">{icon}</span>
+		{title && <span class="callout-title">{title}</span>}
+	</div>
+	<div class="callout-body">
+		<slot />
+	</div>
+</div>
+
+<style>
+	.callout {
+		margin: 1.75em 0;
+		padding: 1.25rem 1.5rem;
+		border-radius: 12px;
+		border-left: 4px solid;
+		background: var(--bg-card);
+	}
+
+	.callout-info {
+		border-color: #3b82f6;
+		background: color-mix(in srgb, #3b82f6 6%, var(--bg-card));
+	}
+
+	.callout-warning {
+		border-color: #f59e0b;
+		background: color-mix(in srgb, #f59e0b 6%, var(--bg-card));
+	}
+
+	.callout-tip {
+		border-color: #10b981;
+		background: color-mix(in srgb, #10b981 6%, var(--bg-card));
+	}
+
+	.callout-fire {
+		border-color: var(--accent);
+		background: color-mix(in srgb, var(--accent) 6%, var(--bg-card));
+	}
+
+	.callout-header {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		margin-bottom: 0.5rem;
+	}
+
+	.callout-icon {
+		font-size: 1.2rem;
+		line-height: 1;
+	}
+
+	.callout-title {
+		font-weight: 700;
+		font-size: 0.95rem;
+		color: var(--text);
+	}
+
+	.callout-body {
+		font-size: 0.95rem;
+		line-height: 1.7;
+		color: var(--text-secondary);
+	}
+
+	.callout-body :global(p:last-child) {
+		margin-bottom: 0;
+	}
+
+	.callout-body :global(strong) {
+		color: var(--text);
+	}
+
+	.callout-body :global(code) {
+		font-size: 0.85em;
+	}
+</style>

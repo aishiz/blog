@@ -1,0 +1,62 @@
+---
+interface Props {
+	label: string;
+	value: number;
+	max: number;
+	color?: string;
+	unit?: string;
+}
+
+const { label, value, max, color = 'var(--accent)', unit = 'ГБ' } = Astro.props;
+const pct = Math.min(100, (value / max) * 100);
+---
+
+<div class="membar">
+	<div class="membar-header">
+		<span class="membar-label">{label}</span>
+		<span class="membar-value">{value} {unit}</span>
+	</div>
+	<div class="membar-track">
+		<div class="membar-fill" style={`width: ${pct}%; background: ${color}`}></div>
+	</div>
+</div>
+
+<style>
+	.membar {
+		margin: 0.6em 0;
+	}
+
+	.membar-header {
+		display: flex;
+		justify-content: space-between;
+		align-items: baseline;
+		margin-bottom: 0.3rem;
+	}
+
+	.membar-label {
+		font-size: 0.85rem;
+		font-weight: 600;
+		color: var(--text);
+	}
+
+	.membar-value {
+		font-size: 0.85rem;
+		font-weight: 800;
+		color: var(--accent-light);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.membar-track {
+		height: 10px;
+		border-radius: 5px;
+		background: var(--bg-secondary);
+		border: 1px solid var(--border);
+		overflow: hidden;
+	}
+
+	.membar-fill {
+		height: 100%;
+		border-radius: 5px;
+		transition: width 0.6s ease;
+	}
+</style>

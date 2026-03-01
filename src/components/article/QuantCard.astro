@@ -1,0 +1,72 @@
+---
+interface Props {
+	title: string;
+	badge?: string;
+	badgeColor?: string;
+}
+
+const { title, badge, badgeColor = 'var(--accent)' } = Astro.props;
+---
+
+<div class="qcard">
+	<div class="qcard-header">
+		<span class="qcard-title">{title}</span>
+		{badge && <span class="qcard-badge" style={`background: ${badgeColor}`}>{badge}</span>}
+	</div>
+	<div class="qcard-body">
+		<slot />
+	</div>
+</div>
+
+<style>
+	.qcard {
+		margin: 0;
+		padding: 1.4rem 1.6rem;
+		border-radius: 12px;
+		border: 1px solid var(--border);
+		background: var(--bg-card);
+		transition: border-color 0.2s ease, transform 0.2s ease;
+	}
+
+	.qcard:hover {
+		border-color: var(--border-light);
+		transform: translateY(-2px);
+	}
+
+	.qcard-header {
+		display: flex;
+		align-items: center;
+		gap: 0.75rem;
+		margin-bottom: 0.6rem;
+	}
+
+	.qcard-title {
+		font-weight: 800;
+		font-size: 1.1rem;
+		color: var(--text);
+	}
+
+	.qcard-badge {
+		padding: 0.15rem 0.6rem;
+		border-radius: 100px;
+		font-size: 0.68rem;
+		font-weight: 700;
+		color: white;
+		letter-spacing: 0.03em;
+		text-transform: uppercase;
+	}
+
+	.qcard-body {
+		font-size: 0.95rem;
+		line-height: 1.7;
+		color: var(--text-secondary);
+	}
+
+	.qcard-body :global(p:last-child) {
+		margin-bottom: 0;
+	}
+
+	.qcard-body :global(strong) {
+		color: var(--text);
+	}
+</style>

@@ -1,0 +1,158 @@
+---
+import { SITE_TITLE } from '../consts';
+import HeaderLink from './HeaderLink.astro';
+import ThemeToggle from './ThemeToggle.astro';
+---
+
+<header>
+	<div class="header-inner">
+		<a href="/" class="logo">
+			<span class="logo-dot"></span>
+			<span class="logo-text">{SITE_TITLE}</span>
+		</a>
+		<div class="header-right">
+			<nav class="desktop-nav">
+				<HeaderLink href="/">Главная</HeaderLink>
+				<HeaderLink href="/blog">Статьи</HeaderLink>
+				<HeaderLink href="/about">Обо мне</HeaderLink>
+			</nav>
+			<ThemeToggle />
+			<button class="mobile-menu-btn" aria-label="Открыть меню" aria-expanded="false">
+				<svg class="icon-menu" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<line x1="3" y1="6" x2="21" y2="6" />
+					<line x1="3" y1="12" x2="21" y2="12" />
+					<line x1="3" y1="18" x2="21" y2="18" />
+				</svg>
+				<svg class="icon-close" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+					<line x1="18" y1="6" x2="6" y2="18" />
+					<line x1="6" y1="6" x2="18" y2="18" />
+				</svg>
+			</button>
+		</div>
+	</div>
+	<nav class="mobile-nav">
+		<HeaderLink href="/">Главная</HeaderLink>
+		<HeaderLink href="/blog">Статьи</HeaderLink>
+		<HeaderLink href="/about">Обо мне</HeaderLink>
+	</nav>
+</header>
+
+<script>
+	const btn = document.querySelector('.mobile-menu-btn');
+	const mobileNav = document.querySelector('.mobile-nav');
+	const iconMenu = btn?.querySelector('.icon-menu') as HTMLElement | null;
+	const iconClose = btn?.querySelector('.icon-close') as HTMLElement | null;
+
+	btn?.addEventListener('click', () => {
+		const isOpen = mobileNav?.classList.toggle('open');
+		btn.setAttribute('aria-expanded', String(!!isOpen));
+		if (iconMenu) iconMenu.style.display = isOpen ? 'none' : 'block';
+		if (iconClose) iconClose.style.display = isOpen ? 'block' : 'none';
+	});
+</script>
+
+<style>
+	header {
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		background: var(--header-bg);
+		backdrop-filter: blur(16px);
+		-webkit-backdrop-filter: blur(16px);
+		border-bottom: 1px solid var(--border);
+	}
+
+	.header-inner {
+		max-width: var(--max-width-wide);
+		margin: 0 auto;
+		padding: 0 2rem;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		height: 56px;
+	}
+
+	.header-right {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+	}
+
+	.logo {
+		display: flex;
+		align-items: center;
+		gap: 0.6rem;
+		text-decoration: none;
+		color: var(--text);
+		font-weight: 800;
+		font-size: 1rem;
+		letter-spacing: -0.01em;
+	}
+
+	.logo:hover {
+		color: var(--text);
+	}
+
+	.logo-dot {
+		width: 10px;
+		height: 10px;
+		border-radius: 50%;
+		background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
+		box-shadow: 0 0 8px rgba(255, 107, 43, 0.4);
+	}
+
+	.desktop-nav {
+		display: flex;
+		align-items: center;
+		gap: 0.15rem;
+	}
+
+	.mobile-menu-btn {
+		display: none;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		background: none;
+		border: none;
+		color: var(--text-secondary);
+		cursor: pointer;
+		border-radius: 8px;
+		transition: all 0.2s ease;
+	}
+
+	.mobile-menu-btn:hover {
+		color: var(--text);
+		background: var(--bg-card);
+	}
+
+	.mobile-nav {
+		display: none;
+		flex-direction: column;
+		padding: 0.5rem 2rem 1rem;
+		border-top: 1px solid var(--border);
+		background: var(--header-bg-solid);
+	}
+
+	@media (max-width: 600px) {
+		.header-inner {
+			padding: 0 1.25rem;
+		}
+
+		.desktop-nav {
+			display: none;
+		}
+
+		.mobile-menu-btn {
+			display: flex;
+		}
+
+		.mobile-nav {
+			padding: 0.5rem 1.25rem 1rem;
+		}
+
+		.mobile-nav.open {
+			display: flex;
+		}
+	}
+</style>

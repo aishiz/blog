@@ -1,0 +1,291 @@
+---
+title: 'Квантизация LLM: Как сделать большие модели доступными каждому'
+description: 'Подробный разбор квантизации больших языковых моделей — методы, форматы, MoE-архитектура и практические примеры с GPTQ, AWQ и llama.cpp.'
+pubDate: 'Mar 01 2026'
+heroImage: '../../assets/quantization/01_memory_comparison.png'
+---
+
+import Callout from '../../components/article/Callout.astro';
+import QuantCard from '../../components/article/QuantCard.astro';
+import MemoryBar from '../../components/article/MemoryBar.astro';
+import StepList from '../../components/article/StepList.astro';
+import VramCalculator from '../../components/article/VramCalculator';
+
+# Квантизация LLM: Как сделать большие модели доступными каждому
+
+Большие языковые модели (LLM) становятся все более мощными, но их размер и требования к ресурсам растут экспоненциально. Модели с сотнями миллиардов параметров, такие как **LLaMA 3 70B** или **DeepSeek-V3** с 671 миллиардом параметров, требуют для своей работы огромного количества видеопамяти (VRAM), что делает их недоступными для запуска на обычном потребительском оборудовании.
+
+<Callout type="fire" title="Главная идея">
+**Квантизация** — процесс сжатия модели, который снижает её размер и требования к памяти в 4–8 раз, часто с минимальной потерей качества. Это ключ к запуску LLM на обычном железе.
+</Callout>
+
+В этом посте мы подробно разберём, что такое квантизация, как она работает, какие методы существуют, а также рассмотрим особый случай — **архитектуру Mixture of Experts (MoE)** — и покажем, как работать с квантизацией на практике.
+
+---
+
+## Что такое квантизация и зачем она нужна?
+
+По своей сути, квантизация — это техника уменьшения точности числовых представлений весов модели. Вместо того чтобы хранить каждый параметр как 32-битное число с плавающей запятой (FP32), мы можем представить его с меньшей точностью, например, как 8-битное целое число (INT8) или даже 4-битное (INT4).
+
+<Callout type="info" title="Аналогия">
+Это похоже на сжатие изображения в JPEG. Вы уменьшаете количество информации о цвете для каждого пикселя, чтобы уменьшить размер файла. Изображение теряет некоторые детали, но остаётся узнаваемым. Точно так же квантизация уменьшает «детализацию» весов модели.
+</Callout>
+
+### Сколько памяти экономит квантизация?
+
+Посмотрите, как меняется потребление VRAM для **LLaMA 3 70B** при разной точности:
+
+<MemoryBar label="FP32 (полная точность)" value={280} max={280} color="linear-gradient(90deg, #ef4444, #dc2626)" />
+<MemoryBar label="FP16 (половинная)" value={140} max={280} color="linear-gradient(90deg, #f59e0b, #d97706)" />
+<MemoryBar label="INT8" value={70} max={280} color="linear-gradient(90deg, #3b82f6, #2563eb)" />
+<MemoryBar label="INT4" value={35} max={280} color="linear-gradient(90deg, #10b981, #059669)" />
+
+Для MoE-моделей, таких как DeepSeek-V3 (671B), квантизация ещё более критична — без неё модель требует более **2600 ГБ** памяти!
+
+![Сравнение объёма памяти для LLM при разной точности (Dense vs MoE)](../../assets/quantization/01_memory_comparison.png)
+
+<VramCalculator client:load />
+
+---
+
+## Как работает квантизация?
+
+Чтобы понять процесс, нужно сначала разобраться в форматах данных, используемых в нейронных сетях.
+
+### Форматы данных
+
+<div class="grid-2" style="margin: 1.5em 0;">
+<QuantCard title="FP32" badge="32 бит" badgeColor="#ef4444">
+Стандартный, наиболее точный формат. Самый «тяжёлый» — **4 байта** на параметр.
+</QuantCard>
+
+<QuantCard title="FP16" badge="16 бит" badgeColor="#f59e0b">
+Уменьшает размер вдвое. Меньший диапазон значений, но достаточен для инференса.
+</QuantCard>
+
+<QuantCard title="BF16" badge="16 бит" badgeColor="#8b5cf6">
+Сохраняет динамический диапазон FP32 за счёт уменьшения точности. Популярен для обучения.
+</QuantCard>
+
+<QuantCard title="INT8 / INT4" badge="8–4 бит" badgeColor="#10b981">
+Максимальное сжатие. Требуют специальных техник для минимизации потери точности.
+</QuantCard>
+</div>
+
+![Форматы представления чисел в нейронных сетях](../../assets/quantization/02_data_types.png)
+
+### Процесс отображения (Mapping)
+
+Квантизация — это процесс отображения диапазона значений из FP32 в более компактный формат. Самый простой метод — **линейная квантизация**:
+
+<StepList steps={[
+	{ num: "1", text: "Находятся <strong>минимальное и максимальное</strong> значения весов в исходном формате FP32" },
+	{ num: "2", text: "Диапазон <strong>линейно отображается</strong> на целевой формат (например, −128…127 для INT8)" },
+	{ num: "3", text: "Вычисляется <strong>коэффициент масштабирования</strong> (scale)" },
+	{ num: "4", text: "Каждое значение <strong>умножается на scale</strong> и округляется до ближайшего целого" },
+]} />
+
+![Процесс квантизации из FP32 в INT8](../../assets/quantization/03_quantization_process.png)
+
+<Callout type="warning" title="Ошибка квантизации">
+Процесс не является полностью обратимым и вносит **ошибку квантизации**. Чем меньше бит в целевом формате, тем больше информации теряется. Современные методы используют сложные алгоритмы, чтобы минимизировать эту ошибку.
+</Callout>
+
+![Ошибка квантизации при разной точности](../../assets/quantization/06_quantization_error.png)
+
+---
+
+## Подходы к квантизации: PTQ vs QAT
+
+<div class="grid-2" style="margin: 1.5em 0;">
+<QuantCard title="Post-Training Quantization (PTQ)" badge="Быстро" badgeColor="#3b82f6">
+Квантизация **после обучения**. Берётся готовая модель и её веса конвертируются в формат с низкой точностью. Не требует переобучения и больших ресурсов, но может приводить к заметной потере точности при агрессивном сжатии (до 4 бит).
+</QuantCard>
+
+<QuantCard title="Quantization-Aware Training (QAT)" badge="Точно" badgeColor="#10b981">
+Квантизация **во время обучения**. Модель «учится» быть устойчивой к потере точности. Требует значительно больше времени и ресурсов (нужны GPU), но позволяет достичь лучшего качества при том же уровне сжатия.
+</QuantCard>
+</div>
+
+![Сравнение подходов PTQ и QAT](../../assets/quantization/04_ptq_vs_qat.png)
+
+---
+
+## Популярные методы и форматы
+
+На практике вы столкнётесь с несколькими популярными форматами квантизации:
+
+| Метод | Основное применение | Плюсы | Минусы |
+| :--- | :--- | :--- | :--- |
+| **GPTQ** | Быстрый инференс на GPU | Высокая скорость, хорошая точность | Плохая поддержка CPU |
+| **GGUF** | CPU и GPU (гибридный режим) | Отличная поддержка CPU, простота | Может быть медленнее GPTQ на GPU |
+| **AWQ** | Инференс на GPU | Высокая скорость и точность | Менее распространён |
+
+<Callout type="tip" title="Совет">
+**GGUF** — де-факто стандарт для запуска моделей на CPU. Используется в `llama.cpp`, Ollama и LM Studio. **GPTQ** и **AWQ** — для максимальной производительности на GPU.
+</Callout>
+
+![Сравнение методов квантизации](../../assets/quantization/05_methods_comparison.png)
+
+---
+
+## Квантизация и архитектура Mixture of Experts (MoE)
+
+Современные LLM всё чаще используют архитектуру **Mixture of Experts (MoE)** — подход, при котором модель содержит множество специализированных «экспертных» подсетей, но для обработки каждого токена активируется лишь небольшое их подмножество.
+
+<Callout type="info" title="Примеры MoE-моделей">
+**Mixtral 8x7B** (Mistral AI), **DeepSeek-V3** (671B, активно ~37B), **Qwen3.5-235B** (активно ~22B), **LLaMA 4 Scout** (109B, активно ~17B)
+</Callout>
+
+### Как работает MoE
+
+В каждом слое трансформера вместо одного FFN-блока находится набор экспертов и **маршрутизирующая сеть (Router)**. Router вычисляет оценку для каждого эксперта и направляет токен к Top-K наиболее подходящим.
+
+![Архитектура MoE: маршрутизация токенов через экспертов](../../assets/quantization/07_moe_architecture.png)
+
+### Почему квантизация MoE — особая задача
+
+<Callout type="fire" title="Ключевой момент">
+Несмотря на то что MoE-модели активируют лишь часть параметров, **все веса всех экспертов должны находиться в памяти одновременно**. Именно поэтому квантизация для MoE ещё более критична.
+</Callout>
+
+<div class="grid-2" style="margin: 1.5em 0;">
+<QuantCard title="🔥 Неравномерная активация" badge="Проблема" badgeColor="#ef4444">
+Одни эксперты активируются часто (hot), другие — редко (cold). Агрессивная квантизация «горячих» экспертов непропорционально снижает качество. Решение — **mixed-precision**: hot → INT8, cold → INT4.
+</QuantCard>
+
+<QuantCard title="🎯 Чувствительность Router" badge="Проблема" badgeColor="#ef4444">
+Маршрутизирующая сеть принимает дискретные решения: даже небольшая ошибка может изменить выбор эксперта. **Router, как правило, не квантизуют** или оставляют в FP16.
+</QuantCard>
+
+<QuantCard title="📊 Проблема калибровки" badge="Проблема" badgeColor="#f59e0b">
+PTQ требует калибровочного датасета. Редко активируемые эксперты могут не встретиться в выборке, что приводит к некорректным коэффициентам. Решение — **per-expert sampling**.
+</QuantCard>
+
+<QuantCard title="📐 Разная чувствительность слоёв" badge="Нюанс" badgeColor="#8b5cf6">
+Даже внутри одного MoE-блока разные линейные слои имеют разную устойчивость к квантизации. Оптимальная конфигурация — **разная битность для каждой матрицы весов**.
+</QuantCard>
+</div>
+
+![Квантизация MoE: частота активации и стратегия назначения точности](../../assets/quantization/08_moe_quantization.png)
+
+### Рекомендации для MoE
+
+| Компонент | Точность | Обоснование |
+| :--- | :--- | :--- |
+| **Attention** | INT8 | Умеренная чувствительность |
+| **Router / Gating** | FP16 | Критичен для маршрутизации |
+| **Shared Expert** | INT8 | Всегда активен |
+| **Hot Experts** | INT8 | Частая активация |
+| **Cold Experts** | INT4 | Редкая активация |
+
+<Callout type="tip" title="Результат">
+Применение такой стратегии позволяет достичь **экономии памяти 60–70%** при минимальной потере качества. DeepSeek-V3 в INT4 занимает ~336 ГБ вместо 2684 ГБ в FP32 — разница в **8 раз**.
+</Callout>
+
+---
+
+## Практический пример: квантизация с `bitsandbytes`
+
+Один из самых простых способов применить квантизацию — использовать библиотеку `bitsandbytes` совместно с `transformers` от Hugging Face.
+
+```python
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+model_id = "mistralai/Mistral-7B-Instruct-v0.2"
+
+quantization_config = BitsAndBytesConfig(
+    load_in_4bit=True,
+    bnb_4bit_compute_dtype=torch.bfloat16,
+    bnb_4bit_quant_type="nf4",
+    bnb_4bit_use_double_quant=True,
+)
+
+tokenizer = AutoTokenizer.from_pretrained(model_id)
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    quantization_config=quantization_config,
+    device_map="auto",
+)
+
+prompt = "Расскажи мне короткую историю о роботе, который мечтал стать художником."
+inputs = tokenizer(prompt, return_tensors="pt").to(model.device)
+
+outputs = model.generate(**inputs, max_new_tokens=150)
+print(tokenizer.decode(outputs[0], skip_special_tokens=True))
+```
+
+<Callout type="tip" title="Результат">
+Этот код загрузит **Mistral 7B** с 4-битной квантизацией NF4, что позволит запустить модель на видеокарте с **~5–6 ГБ VRAM** вместо ~28 ГБ в FP32.
+</Callout>
+
+Для MoE-моделей подход аналогичен:
+
+```python
+model_id = "mistralai/Mixtral-8x7B-Instruct-v0.1"
+
+model = AutoModelForCausalLM.from_pretrained(
+    model_id,
+    quantization_config=quantization_config,
+    device_map="auto",
+)
+# Без квантизации: ~94 GB VRAM (FP16)
+# С INT4 квантизацией: ~24 GB VRAM
+```
+
+Установка зависимостей:
+
+```bash
+pip install transformers bitsandbytes accelerate
+```
+
+---
+
+## Где найти готовые квантизированные модели?
+
+Вам не обязательно квантизовать модели самостоятельно:
+
+<div style="display: flex; flex-direction: column; gap: 0.75rem; margin: 1.5em 0;">
+<QuantCard title="🤗 Hugging Face Hub" badge="Главный источник" badgeColor="#f59e0b">
+Ищите репозитории от **TheBloke** — квантизованные версии практически всех популярных моделей в GGUF, GPTQ и AWQ. Самый большой каталог готовых квантизованных моделей в открытом доступе.
+</QuantCard>
+
+<QuantCard title="🦙 Ollama" badge="Просто" badgeColor="#10b981">
+Одна команда `ollama run mixtral` — и модель уже работает. Встроенная библиотека с готовыми квантизованными версиями популярных моделей. Идеально для быстрого старта.
+</QuantCard>
+
+<QuantCard title="🖥️ LM Studio" badge="GUI" badgeColor="#3b82f6">
+Графический интерфейс для скачивания и запуска GGUF-моделей без единой строчки кода. Встроенный поиск по Hugging Face, удобное управление моделями и чат-интерфейс.
+</QuantCard>
+</div>
+
+### Как читать названия файлов
+
+| Суффикс | Описание | Рекомендация |
+| :--- | :--- | :--- |
+| `Q2_K` | 2-битная, очень агрессивная | Только для слабого железа |
+| `Q4_K_M` | 4-битная, сбалансированная | **Лучший выбор для большинства** |
+| `Q5_K_M` | 5-битная, высокое качество | Если есть запас VRAM |
+| `Q8_0` | 8-битная, почти без потерь | Для максимального качества |
+
+---
+
+## Заключение
+
+<Callout type="fire" title="Итог">
+Квантизация — ключевая технология, которая делает LLM доступными каждому. Для **dense-моделей** она уменьшает требования к памяти в 4–8 раз. Для **MoE-моделей** — это единственный способ запустить гигантов вроде DeepSeek-V3 на потребительском железе.
+</Callout>
+
+Понимая принципы работы квантизации, особенности архитектуры MoE и зная, где найти готовые решения, вы можете легко интегрировать современные языковые модели в свои проекты — даже на обычном ноутбуке.
+
+---
+
+### Источники
+
+1. [A Visual Guide to Quantization — Maarten Grootendorst](https://newsletter.maartengrootendorst.com/p/a-visual-guide-to-quantization)
+2. [Quantization for Large Language Models — DataCamp](https://www.datacamp.com/tutorial/quantization-for-large-language-models)
+3. [What new challenges does the MoE architecture introduce for LLM quantization? — Medium](https://medium.com/@yangwq177/what-new-challenges-does-the-moe-architecture-introduce-for-the-quantization-of-large-language-243ef2812a72)
+4. [Examining Post-Training Quantization for Mixture-of-Experts — arXiv](https://arxiv.org/html/2406.08155v1)
+5. [TheBloke on Hugging Face](https://huggingface.co/TheBloke)
