@@ -396,4 +396,26 @@ body::-webkit-scrollbar-thumb:hover {
 	.code-block-header {
 		padding: 5px 10px;
 	}
+
+	th, td {
+		padding: 0.4em 0.55em;
+		font-size: 0.78rem;
+	}
+
+	img {
+		border-radius: 8px;
+	}
+
+	hr {
+		margin: 1.5em 0;
+	}
+
+	blockquote {
+		padding: 0.5em 0.85em;
+		font-size: 0.9rem;
+	}
+
+	ul, ol {
+		padding-left: 1.25em;
+	}
 }

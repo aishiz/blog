@@ -69,4 +69,30 @@ const { title, badge, badgeColor = 'var(--accent)' } = Astro.props;
 	.qcard-body :global(strong) {
 		color: var(--text);
 	}
+
+	@media (max-width: 480px) {
+		.qcard {
+			padding: 1rem 1.15rem;
+			border-radius: 10px;
+		}
+
+		.qcard-header {
+			gap: 0.5rem;
+			margin-bottom: 0.4rem;
+		}
+
+		.qcard-title {
+			font-size: 0.95rem;
+		}
+
+		.qcard-badge {
+			font-size: 0.6rem;
+			padding: 0.12rem 0.5rem;
+		}
+
+		.qcard-body {
+			font-size: 0.85rem;
+			line-height: 1.6;
+		}
+	}
 </style>
