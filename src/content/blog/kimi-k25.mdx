@@ -1,0 +1,168 @@
+---
+title: 'Kimi K2.5: Как KimiClaw прогрел рынок на $10 лярд'
+description: 'Разобрал Kimi K2.5 от Moonshot AI — 1T параметров MoE, рой из 100 агентов с 4.5× ускорением и KimiClaw, который за 20 дней сделал больше выручки чем весь 2025 год. Без воды, с шизой.'
+pubDate: 'Mar 02 2026'
+heroImage: '../../assets/kimi25/kimi_post_cover.jpg'
+---
+
+import Callout from '../../components/article/Callout.astro';
+import QuantCard from '../../components/article/QuantCard.astro';
+import MemoryBar from '../../components/article/MemoryBar.astro';
+import StepList from '../../components/article/StepList.astro';
+import KimiBenchmarkChart from '../../components/article/KimiBenchmarkChart';
+import AgentSwarmViz from '../../components/article/AgentSwarmViz';
+import ValuationTimeline from '../../components/article/ValuationTimeline';
+
+# Kimi K2.5: Как KimiClaw прогрел рынок на $10 лярд 🫡
+
+Ну чё, малютки, всё ещё думаете что в ИИ-гонке участвуют только OpenAI с Anthropic? Поздравляю, вас обманули западные медиа 🫡
+
+Пока все дружно ждали GPT-5.3 и рассуждали про Claude Opus — пекинский стартап Moonshot AI тихо выкатил **Kimi K2.5**, взял самый вирусный open-source агент в мире, обернул его в облако без единой строки настройки — и за **50 дней** стал самым быстрым декакорном в истории Китая. Быстрее ByteDance. Быстрее Pinduoduo. За два месяца.
+
+За **20 дней** они сделали больше выручки, чем за весь 2025 год. Дайте пять секунд, перечитайте это ещё раз.
+
+<Callout type="fire" title="Суть за 10 секунд">
+**27 января** — выходит Kimi K2.5: **1T параметров**, 32B активных, контекст 256K, рой из 100 субагентов. **15 февраля** — запускается KimiClaw, облачная версия самого популярного open-source агента в мире. **24 февраля** — оценка компании достигает **$10 миллиардов**. Китайцы снова жгут.
+</Callout>
+
+---
+
+## Часть 1: Что внутри Kimi K2.5
+
+Прилетело 27 января 2026 года. Архитектура — **Mixture-of-Experts (MoE)** с **1 триллионом параметров**. Но прелесть MoE в том, что на каждый токен активируется только **32 миллиарда** из них — остальные сидят и ждут своего часа. Мощность флагмана, стоимость компактной модели. Кек.
+
+<div class="grid-2" style="margin: 1.5em 0;">
+<QuantCard title="1T параметров" badge="Всего" badgeColor="#7c3aed">
+Один из крупнейших MoE в мире. Но активируется лишь **32B на токен** — MoE-архитектура не даёт этому превратиться в ад для тачек.
+</QuantCard>
+
+<QuantCard title="256K токенов" badge="Контекст" badgeColor="#3b82f6">
+Огромное контекстное окно — за один раз скармливаешь модели целую кодовую базу, книгу или массив документов. Без дробления.
+</QuantCard>
+
+<QuantCard title="15T токенов" badge="Обучение" badgeColor="#10b981">
+Предобучение на **15 триллионах** смешанных визуальных и текстовых токенов — нативная мультимодальность, а не болтающийся сбоку энкодер.
+</QuantCard>
+
+<QuantCard title="100 субагентов" badge="Agent Swarm" badgeColor="#ff6b2b">
+Флагманская фишка — автономный рой до **100 специализированных субагентов**. Работают параллельно. До **1500 вызовов инструментов одновременно**.
+</QuantCard>
+</div>
+
+### Бенчмарки — смотрим на цифры
+
+Потестил бенчмарки — годнота. На **Humanity's Last Exam** — одном из самых жёстких тестов на рассуждение — Kimi K2.5 набрал **50.2%** с инструментами и сделал GPT-5.2 с Claude Opus 4.5. SWE-Bench Verified — **76.8%**, лучший в кодировании. В визуалке — **92.3%** на OCRBench. Интерактивный чарт 👇
+
+<KimiBenchmarkChart client:visible />
+
+<Callout type="info" title="Если MoE для вас тёмный лес">
+Суть простая: вместо одной монолитной нейронки у вас куча «экспертов», и маршрутизатор активирует только нужных для каждого токена. Kimi K2.5 активирует **3.2%** параметров на токен. _Как нанять 1000 сотрудников, но в каждый момент работают только 32 самых подходящих._
+</Callout>
+
+---
+
+## Часть 2: Agent Swarm — рой агентов и 4.5× ускорение
+
+Если честно — самая революционная часть Kimi K2.5 это не размер модели. Это **Agent Swarm**.
+
+Представь: даёшь задачу, а вместо одного агента который делает всё по очереди — разворачивается рой. Один парсит данные, второй пишет код, третий тестирует, четвёртый документацию. Одновременно. До **1500 вызовов инструментов за раз**. Ускорение сложных задач — **до 4.5 раз** по сравнению с последовательным режимом.
+
+Нажми «Запустить задачу» ниже и переключись между режимами — разница ощутима 👇
+
+<AgentSwarmViz client:visible />
+
+<MemoryBar label="Параллельный рой (Swarm)" value={450} max={450} color="#10b981" unit="%" />
+<MemoryBar label="Последовательный режим" value={100} max={450} color="#ef4444" unit="%" />
+
+---
+
+## Часть 3: KimiClaw — как они снесли барьер входа
+
+Kimi K2.5 без дистрибуции — просто крутая модель для разработчиков. Что-то на уровне «ну, заходи в доки, поднимай сервак, настраивай API». Это не взрыв. Взрыв случился с **KimiClaw**.
+
+История началась с **OpenClaw** — open-source проекта, который превращает LLM в постоянно работающего персонального ИИ-агента. Он стал вирусным: **100K звёзд на GitHub за одну неделю**, 2 миллиона посетителей. Проблема одна — чтобы запустить, нужен сервак, командная строка, инфраструктура. Хрен там масса-маркет.
+
+<Callout type="tip" title="Гениальный ход">
+15 февраля 2026 года Moonshot AI запустили **KimiClaw** — облачную версию OpenClaw прямо на kimi.com. Развёртывание в один клик. Никакой командной строки. Никаких серверов. Самый популярный ИИ-агент в мире — во вкладке браузера. _Поздравляю, технический барьер испарился._
+</Callout>
+
+### Что получаешь с KimiClaw:
+
+<StepList steps={[
+	{ num: "1", text: "<strong>24/7 агент в облаке</strong> — ноль строк настройки. Открыл браузер — работает." },
+	{ num: "2", text: "<strong>ClawHub: 5000+ навыков</strong> — готовые SKILL-паттерны от сообщества. Против ~700 в базовой версии OpenClaw." },
+	{ num: "3", text: "<strong>40 ГБ облачного хранилища</strong> — идеально для RAG-воркфлоу, больших датасетов и файлов." },
+	{ num: "4", text: "<strong>Поиск в реальном времени</strong> — интеграция с финансовыми данными от Yahoo Finance и других источников." },
+]} />
+
+---
+
+## Часть 4: Цифры — история взрывного роста
+
+Малютки, приготовьтесь. Дальше идут цифры, которые задолбаешься укладывать в голове.
+
+<ValuationTimeline client:visible />
+
+### Рост пользователей — пиздец какие темпы
+
+<MemoryBar label="Ежемесячный рост платящих (кон. 2025)" value={170} max={200} color="#8b5cf6" unit="%" />
+<MemoryBar label="Рост платящих после запуска K2.5" value={400} max={400} color="#ff6b2b" unit="%" />
+
+После запуска Kimi K2.5 число платящих пользователей по всему миру **увеличилось в четыре раза** за несколько дней. До этого — **170%+ ежемесячного роста** в конце 2025 года. Для контекста: это не маленький стартап с 200 пользователями, это уже реальный масштаб.
+
+### Доминирование на рынке API
+
+<div class="grid-2" style="margin: 1.5em 0;">
+<QuantCard title="180K+ звёзд" badge="OpenClaw на GitHub" badgeColor="#10b981">
+Проект в основе KimiClaw. Один из самых быстро растущих open-source репозиториев в истории — **100K за неделю**, потом доросло до 180K+.
+</QuantCard>
+
+<QuantCard title="61%" badge="OpenRouter токены" badgeColor="#f59e0b">
+К концу февраля 2026 года китайские модели во главе с Kimi захватили **61% от общего объёма токенов** на OpenRouter — крупнейшем агрегаторе API для LLM.
+</QuantCard>
+</div>
+
+<Callout type="warning" title="Важная оговорка">
+Быстрый рост оценки до $10B — это не только про качество модели. Техническое превосходство было необходимым условием, но **не достаточным**. KimiClaw превратил мощную модель в массовый продукт — и вот тогда метрики взорвались. Технология решает потолок. Дистрибуция решает скорость.
+</Callout>
+
+---
+
+## Заключение: формула
+
+Субъективно, но для меня история Kimi K2.5 — это хрестоматийный кейс того, как работает правильный go-to-market в AI.
+
+<div class="grid-2" style="margin: 1.5em 0;">
+<QuantCard title="Kimi K2.5" badge="Технология" badgeColor="#7c3aed">
+1T параметров MoE, 32B активных, 256K контекст, нативная мультимодальность, Agent Swarm с 4.5× ускорением. Мощь есть.
+</QuantCard>
+
+<QuantCard title="KimiClaw" badge="Дистрибуция" badgeColor="#ff6b2b">
+Самый популярный open-source агент — в облаке, один клик, нулевые технические знания. 5000+ SKILL-ов в ClawHub. Масштаб есть.
+</QuantCard>
+</div>
+
+Moonshot AI не просто выпустили годную модель. Они нашли самый вирусный инструмент в экосистеме, завернули его в zero-friction платформу — и открыли дверь для миллионов людей которые раньше упирались в технический барьер. За 20 дней — больше денег, чем за весь предыдущий год. Это, малютки, не удача. Это стратегия.
+
+<Callout type="fire" title="Главный вывод">
+Нахуя строить только модель, если можно построить и модель, и дистрибуцию? Moonshot AI максимизировали обе переменные — и стали самым быстрым декакорном в истории Китая. Вопрос на засыпку: кто следующий повторит эту формулу? 🤔
+</Callout>
+
+---
+
+### Источники
+
+1. [China's Kimi (Moonshot AI) Sets Record as Fastest Decacorn — The China Academy](https://thechinaacademy.org/kimi-moonshot-ai-becomes-chinas-fastest-decacorn-as-20-day-revenue-surpasses-entire-2025-total-china-ai-daily-february-24-2026/)
+2. [5 Thoughts on Kimi K2 Thinking — Interconnects](https://www.interconnects.ai/p/kimi-k2-thinking-what-it-means)
+3. [Kimi K2 Thinking: what 200+ tool calls mean for production — Lambda](https://lambda.ai/blog/kimi-k2-thinking)
+4. [Kimi K2.5 Tech Blog: Visual Agentic Intelligence — Moonshot AI](https://www.kimi.com/blog/kimi-k2-5)
+5. [Kimi K2.5 and Agent Swarm: A Guide With Four Practical Examples — DataCamp](https://www.datacamp.com/tutorial/kimi-k2-agent-swarm-guide)
+6. [How Moonshot's Kimi K2.5 helps AI builders spin up agent swarms — VentureBeat](https://venturebeat.com/orchestration/moonshot-ai-debuts-kimi-k2-5-most-powerful-open-source-llm-beating-opus-4-5)
+7. [Kimi K2.5 — Don't Worry About the Vase](https://thezvi.substack.com/p/kimi-k25)
+8. [Introducing OpenClaw — openclaw.ai](https://openclaw.ai/blog/introducing-openclaw)
+9. [Kimi Claw Review: Moonshot AI's New OpenClaw Interface — The-Sys](https://www.thesys.dev/blogs/kimi-claw)
+10. [Kimi Claw: Risks from Chinese-Hosted 'Always On' AI Agents — IAPS](https://www.iaps.ai/research/kimi-claw-risks)
+11. [Kimi Claw: A $4.8 Billion Chinese AI Company Just Put OpenClaw In Your Browser — Medium](https://medium.com/@julian.goldie_83205/kimi-claw-a-4-8-billion-chinese-ai-company-just-put-openclaw-in-your-browser-7dfcf48609d2)
+12. [Moonshot AI Raises $500M Series C at $4.3B Valuation — The SaaS News](https://www.thesaasnews.com/news/moonshot-ai-raises-500m-series-c-at-4-3b-valuation)
+13. [Moonshot AI Valued at $4.8B in Fresh Round — TechBuzz China](https://www.techbuzz.ai/articles/moonshot-ai-valued-at-4-8b-in-fresh-round)
+14. [Moonshot AI sees overseas revenue surge as Kimi K2.5 gains traction abroad — KrASIA](https://kr-asia.com/moonshot-ai-sees-overseas-revenue-surge-as-kimi-k2-5-gains-traction-abroad)
