@@ -27,7 +27,9 @@ const fmtGiB = (bytes: number) => {
 	const g = bytes / GIB;
 	if (g >= 1000) return `${(g / 1024).toFixed(2)} ТБ`;
 	if (g >= 1) return `${g.toFixed(2)} ГБ`;
-	return `${(bytes / (1024 * 1024)).toFixed(0)} МБ`;
+	const mb = bytes / (1024 * 1024);
+	if (mb >= 1) return `${mb.toFixed(mb < 10 ? 1 : 0)} МБ`;
+	return `${(bytes / 1024).toFixed(0)} КБ`;
 };
 
 function useIsMobile(breakpoint = 560) {

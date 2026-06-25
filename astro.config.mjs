@@ -25,6 +25,13 @@ for (const file of fs.readdirSync(blogDir)) {
 // https://astro.build/config
 export default defineConfig({
     site: 'https://ai-shiz.ru',
+    // pnpm-симлинки заставляют Vite поднимать два инстанса React в dev → "Invalid hook call".
+    // dedupe форсит единственный инстанс react/react-dom при резолве.
+    vite: {
+        resolve: {
+            dedupe: ['react', 'react-dom'],
+        },
+    },
     integrations: [
         mdx(),
         sitemap({
