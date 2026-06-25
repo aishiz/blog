@@ -1,0 +1,199 @@
+---
+title: 'NVIDIA Dynamo: дирижёр для инференса на целый дата-центр 🎻🖥️'
+description: 'Разбираю ai-dynamo/dynamo — открытый оркестратор инференса от NVIDIA. Зачем нужен, как устроен (KV-aware роутинг, disaggregated prefill/decode, KVBM, Planner), как обрабатывается запрос и как запустить. С mermaid-диаграммами и интерактивом.'
+pubDate: 'Jun 25 2026'
+---
+
+import Callout from '../../components/article/Callout.astro';
+import QuantCard from '../../components/article/QuantCard.astro';
+import StepList from '../../components/article/StepList.astro';
+import Mermaid from '../../components/article/Mermaid';
+import KvRoutingDemo from '../../components/article/KvRoutingDemo';
+
+# NVIDIA Dynamo: дирижёр для инференса на целый дата-центр 🎻🖥️
+
+Ну чё, малютки, vLLM и SGLang вы уже щупали — они шикарно гоняют модель на одной-двух видяхах. А теперь вопрос на засыпку: у тебя **64 GPU на восьми нодах**, тысячи запросов в секунду, и надо чтобы всё это работало как единый организм, а не как восемь отдельных серверов, дерущихся за память. Кто этим дирижирует?
+
+Вот тут и выходит **NVIDIA Dynamo** — открытый оркестратор инференса дата-центрового масштаба. Важный момент: он **не заменяет** vLLM, TensorRT-LLM или SGLang, а превращает их в единую скоординированную систему на много нод.
+
+<Callout type="fire" title="Суть за 10 секунд">
+**Dynamo** — это слой **над** движками инференса. Сами движки оптимизируют одну ноду, а Dynamo раскидывает запросы по кластеру: маршрутизирует с учётом KV-кэша, разносит фазы prefill и decode по разным пулам GPU, гоняет KV-кэш между GPU/CPU/SSD и авто-масштабирует под SLA. Ядро на **Rust**, обвязка на Python, лицензия **Apache 2.0**.
+</Callout>
+
+<QuantCard title="Apache 2.0" badge="Лицензия" badgeColor="#10b981">
+Полностью открыто, без вендор-лока. Бэкенды — vLLM, TensorRT-LLM, SGLang.
+</QuantCard>
+
+<QuantCard title="Rust + Python" badge="Стек" badgeColor="#7c3aed">
+Ядро на Rust ради скорости (~52% кода), Python для расширяемости. Немного Go для Kubernetes.
+</QuantCard>
+
+<QuantCard title="до 7×" badge="Throughput" badgeColor="#f59e0b">
+NVIDIA заявляет до 7× пропускной способности на GPU (DeepSeek R1) и 2× быстрее TTFT за счёт KV-aware роутинга.
+</QuantCard>
+
+---
+
+## Зачем он нужен
+
+Движок инференса (vLLM и ко.) живёт в рамках одной ноды. Как только тебе нужен кластер — вылезают проблемы, которые движок в одиночку не решает:
+
+<StepList steps={[
+	{ num: "1", text: "<strong>Куда слать запрос?</strong> Если на одной ноде уже посчитан KV-кэш для этого префикса — глупо считать его заново на другой." },
+	{ num: "2", text: "<strong>Prefill и decode конфликтуют.</strong> Prefill жрёт вычисления, decode — память. На одних и тех же GPU они мешают друг другу." },
+	{ num: "3", text: "<strong>Сколько GPU выделить?</strong> Нагрузка скачет, а реплики надо поднимать/гасить под SLA, а не на глазок." },
+	{ num: "4", text: "<strong>Куда девать KV-кэш</strong>, когда он не влезает в HBM? (Привет, моя <a href=\"/blog/kv-cache/\">статья про KV-кэш</a>.)" },
+]} />
+
+Dynamo берёт эти задачи на себя. Один движок — это музыкант; Dynamo — дирижёр, который заставляет весь оркестр играть в такт.
+
+---
+
+## Как устроен: архитектура
+
+Dynamo — это набор слабосвязанных компонентов. Вот основной поток:
+
+<Mermaid client:visible caption="Запрос проходит через Frontend и Router, дальше — раздельные пулы prefill и decode; KVBM держит KV-кэш через все уровни памяти, Planner масштабирует пулы." chart={`flowchart TB
+  C(["Клиент"]) --> F["Frontend<br/>OpenAI-совместимый API"]
+  F --> R{"Router<br/>KV-aware"}
+  R --> P["Пул Prefill-воркеров"]
+  R --> D["Пул Decode-воркеров"]
+  P -- "KV-кэш по NIXL" --> D
+  P <--> KVBM[("KVBM<br/>GPU → CPU → SSD → remote")]
+  D <--> KVBM
+  PL["Planner<br/>SLA-автоскейлер"] -.масштабирует.-> P
+  PL -.масштабирует.-> D
+`} />
+
+Ключевые детали по компонентам:
+
+<StepList steps={[
+	{ num: "1", text: "<strong>Frontend</strong> — HTTP-сервер с OpenAI-совместимым API. То, куда стучится твой клиент." },
+	{ num: "2", text: "<strong>Router</strong> — маршрутизатор с KV-aware логикой: учитывает загрузку воркеров и пересечение по KV-кэшу." },
+	{ num: "3", text: "<strong>Disaggregated Prefill/Decode</strong> — фазы разнесены по независимым пулам GPU и масштабируются отдельно." },
+	{ num: "4", text: "<strong>KVBM</strong> (KV Block Manager) — выгружает KV-кэш по уровням: GPU → CPU → SSD → удалённое хранилище." },
+	{ num: "5", text: "<strong>Planner</strong> — автоскейлер под SLA: профилирует нагрузку и подбирает размер пулов (NVIDIA заявляет −80% нарушений SLA)." },
+	{ num: "6", text: "<strong>ModelExpress + NIXL</strong> — стриминг весов и передача KV-кэша между нодами по NVLink/сети (до 7× быстрее старт реплики)." },
+]} />
+
+---
+
+## Как обрабатывается запрос
+
+Самое интересное — **disaggregated serving**. В обычном движке одна группа GPU делает и prefill (обработать промпт, набить KV-кэш), и decode (генерить токены). Dynamo разносит это на два пула, а KV-кэш между ними передаёт по NIXL:
+
+<Mermaid client:visible caption="Disaggregated serving: prefill считается на одном пуле, KV-кэш переезжает на decode-пул, который стримит токены. Фазы масштабируются независимо." chart={`sequenceDiagram
+  participant C as Клиент
+  participant F as Frontend
+  participant R as Router
+  participant P as Prefill-пул
+  participant D as Decode-пул
+  C->>F: POST /v1/chat/completions
+  F->>R: запрос на маршрутизацию
+  R->>P: prefill (посчитать KV-кэш промпта)
+  P-->>D: передать KV-кэш (NIXL)
+  R->>D: decode (генерация токенов)
+  D-->>C: стрим токенов
+`} />
+
+Зачем так? Потому что prefill **compute-bound**, а decode **memory-bound** (подробно — в моей <a href="/blog/kv-cache/">статье про KV-кэш</a>). Когда они на одних GPU, то мешают друг другу. Разнеси их — и каждый пул масштабируется под свою нагрузку. Хочешь больше длинных промптов — добавь prefill-воркеров, не трогая decode.
+
+---
+
+## KV-aware роутинг: главная фишка
+
+Router не раскидывает запросы вслепую. Если несколько запросов делят общий префикс (один системный промпт, один документ в RAG), то KV-кэш для него уже посчитан на каком-то воркере. KV-aware роутер шлёт запрос **именно туда** — и prefill для общей части пропускается.
+
+Покрути — сравни round-robin и KV-aware на одном потоке запросов:
+
+<KvRoutingDemo client:visible />
+
+Видишь разницу в проценте попаданий? Каждое попадание — это пропущенный prefill, то есть меньше задержка до первого токена. Отсюда заявленные **2× быстрее TTFT**.
+
+---
+
+## Куда девается KV-кэш: KVBM
+
+KV-кэш на длинном контексте не влезает в дорогую GPU-память (HBM). **KVBM** делает то же, что ОС с виртуальной памятью — раскладывает кэш по уровням, от быстрого к ёмкому:
+
+<Mermaid client:visible caption="KVBM держит горячий кэш в HBM, а холодный вытесняет вниз по иерархии — освобождая GPU-память под активные запросы." chart={`flowchart LR
+  GPU["GPU HBM<br/>быстро, мало"]:::hot --> CPU["CPU RAM<br/>средне"]
+  CPU --> SSD["SSD<br/>медленно, много"]
+  SSD --> REM["Remote storage<br/>сеть, безразмерно"]
+  classDef hot fill:#7c3aed33,stroke:#7c3aed;
+`} />
+
+Так на одни и те же GPU влезает больше параллельных запросов и более длинные контексты — кэш не выбрасывается, а откладывается «пониже» и подтягивается обратно при необходимости.
+
+---
+
+## Остальные компоненты
+
+<StepList steps={[
+	{ num: "🗓️", text: "<strong>Planner</strong> — следит за SLA и сам решает, сколько prefill/decode воркеров поднять под текущую нагрузку." },
+	{ num: "🚀", text: "<strong>ModelExpress</strong> — стримит веса модели по NIXL/NVLink, чтобы новая реплика стартовала за секунды, а не минуты." },
+	{ num: "☸️", text: "<strong>Grove</strong> — Kubernetes-оператор для topology-aware планирования (раскладка с учётом топологии сети/GPU)." },
+	{ num: "🧪", text: "<strong>AIConfigurator</strong> — симулирует 10K+ конфигов развёртывания за секунды, чтобы подобрать оптимальную раскладку." },
+]} />
+
+---
+
+## Как запустить
+
+Минимальный старт — через готовый контейнер с SGLang-бэкендом:
+
+```bash
+docker run --gpus all --network host --rm -it \
+  nvcr.io/nvidia/ai-dynamo/sglang-runtime:1.2.1
+
+# внутри контейнера: фронтенд + воркер
+python3 -m dynamo.frontend --http-port 8000 --discovery-backend file &
+python3 -m dynamo.sglang --model-path Qwen/Qwen3-0.6B \
+  --discovery-backend file &
+
+# проверка
+curl -s localhost:8000/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"model":"Qwen/Qwen3-0.6B","messages":[{"role":"user","content":"Hello!"}]}'
+```
+
+Или поставить из PyPI (выбрав бэкенд):
+
+```bash
+uv pip install --prerelease=allow "ai-dynamo[sglang]"
+```
+
+<Callout type="tip" title="Когда это вообще надо">
+Если у тебя <strong>одна GPU</strong> — Dynamo не нужен, бери чистый vLLM/SGLang. Dynamo начинает окупаться на <strong>кластере</strong>: когда запросов много, контексты длинные, надо разносить prefill/decode и держать SLA при минимуме железа. Для прода на десятках GPU — мастхэв; для домашней RTX — оверкилл.
+</Callout>
+
+---
+
+## Где это в стеке
+
+Чтобы уложить в голове: движок (vLLM/TRT-LLM/SGLang) гоняет модель на ноде, а Dynamo сидит над ними и дирижирует кластером.
+
+<Mermaid client:visible caption="Dynamo — слой оркестрации над движками инференса, а те уже крутят модель на конкретных GPU." chart={`flowchart TB
+  U(["Запросы юзеров"]) --> DYN["NVIDIA Dynamo<br/>роутинг · disagg · KVBM · planner"]
+  DYN --> E1["vLLM"]
+  DYN --> E2["TensorRT-LLM"]
+  DYN --> E3["SGLang"]
+  E1 --> G[("GPU-кластер")]
+  E2 --> G
+  E3 --> G
+`} />
+
+Если хочешь понять сами движки — у меня есть <a href="/blog/llm_inference_engines_complete_guide/">большой гайд по движкам инференса</a>, а про KV-кэш, вокруг которого вся эта оркестрация и пляшет, — <a href="/blog/kv-cache/">отдельная статья</a>.
+
+---
+
+## TL;DR
+
+<StepList steps={[
+	{ num: "1", text: "<strong>Что это:</strong> открытый (Apache 2.0) оркестратор инференса от NVIDIA, слой над vLLM/TRT-LLM/SGLang" },
+	{ num: "2", text: "<strong>Зачем:</strong> координация инференса на кластере — роутинг, масштабирование, память" },
+	{ num: "3", text: "<strong>Как:</strong> KV-aware роутинг, disaggregated prefill/decode, KVBM (GPU→CPU→SSD), Planner-автоскейлер, ядро на Rust" },
+	{ num: "4", text: "<strong>Кому:</strong> тем, кто крутит LLM на многих GPU/нодах под SLA; для одной видяхи — лишнее" },
+]} />
+
+Тренд очевиден: инференс перестаёт быть «запустил модель на сервере» и становится распределённой системой со своим дирижёром. Dynamo — открытый способ этого дирижёра потрогать. 🫡
