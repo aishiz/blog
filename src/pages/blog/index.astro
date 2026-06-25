@@ -28,31 +28,33 @@ const searchData = posts.map((post) => ({
 	slug: post.id,
 	date: formatDate(post.data.pubDate),
 }));
+
+const collectionSchema = {
+	"@context": "https://schema.org",
+	"@type": "CollectionPage",
+	"name": `Все статьи — ${SITE_TITLE}`,
+	"description": "Статьи об AI-агентах, LLM, квантизации моделей и ML Inference",
+	"url": new URL('/blog', Astro.site).toString(),
+	"isPartOf": {
+		"@type": "WebSite",
+		"name": SITE_TITLE,
+		"url": Astro.site?.toString()
+	},
+	"breadcrumb": {
+		"@type": "BreadcrumbList",
+		"itemListElement": [
+			{ "@type": "ListItem", "position": 1, "name": "Главная", "item": Astro.site?.toString() },
+			{ "@type": "ListItem", "position": 2, "name": "Статьи", "item": new URL('/blog', Astro.site).toString() }
+		]
+	}
+};
 ---
 
 <!doctype html>
 <html lang="ru">
 	<head>
 		<BaseHead title={`Все статьи — ${SITE_TITLE}`} description="Статьи об AI-агентах, LLM, квантизации моделей, ML Inference и практическом опыте работы с большими языковыми моделями.">
-			<script type="application/ld+json" set:html={JSON.stringify({
-				"@context": "https://schema.org",
-				"@type": "CollectionPage",
-				"name": `Все статьи — ${SITE_TITLE}`,
-				"description": "Статьи об AI-агентах, LLM, квантизации моделей и ML Inference",
-				"url": new URL('/blog', Astro.site).toString(),
-				"isPartOf": {
-					"@type": "WebSite",
-					"name": SITE_TITLE,
-					"url": Astro.site?.toString()
-				},
-				"breadcrumb": {
-					"@type": "BreadcrumbList",
-					"itemListElement": [
-						{ "@type": "ListItem", "position": 1, "name": "Главная", "item": Astro.site?.toString() },
-						{ "@type": "ListItem", "position": 2, "name": "Статьи", "item": new URL('/blog', Astro.site).toString() }
-					]
-				}
-			})} />
+			<script type="application/ld+json" set:html={JSON.stringify(collectionSchema)} />
 		</BaseHead>
 	</head>
 	<body>

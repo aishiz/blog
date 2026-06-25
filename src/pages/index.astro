@@ -24,30 +24,32 @@ const rest = allPosts.slice(1, 5);
 function formatDate(d: Date) {
 	return d.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
 }
+
+const websiteSchema = {
+	"@context": "https://schema.org",
+	"@type": "WebSite",
+	"name": SITE_TITLE,
+	"description": SITE_DESCRIPTION,
+	"url": Astro.site,
+	"inLanguage": "ru-RU",
+	"author": {
+		"@type": "Person",
+		"name": "Артемий",
+		"url": `${Astro.site}about`
+	},
+	"potentialAction": {
+		"@type": "SearchAction",
+		"target": `${Astro.site}blog?q={search_term_string}`,
+		"query-input": "required name=search_term_string"
+	}
+};
 ---
 
 <!doctype html>
 <html lang="ru">
 	<head>
 		<BaseHead title={`${SITE_TITLE} — Блог об AI, LLM и ML Inference`} description="Блог Артемия об AI-агентах, LLM, ML Inference и квантизации моделей. Статьи, заметки и практический опыт работы с большими языковыми моделями.">
-			<script type="application/ld+json" set:html={JSON.stringify({
-				"@context": "https://schema.org",
-				"@type": "WebSite",
-				"name": SITE_TITLE,
-				"description": SITE_DESCRIPTION,
-				"url": Astro.site,
-				"inLanguage": "ru-RU",
-				"author": {
-					"@type": "Person",
-					"name": "Артемий",
-					"url": `${Astro.site}about`
-				},
-				"potentialAction": {
-					"@type": "SearchAction",
-					"target": `${Astro.site}blog?q={search_term_string}`,
-					"query-input": "required name=search_term_string"
-				}
-			})} />
+			<script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
 		</BaseHead>
 	</head>
 	<body>
