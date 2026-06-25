@@ -1,0 +1,166 @@
+---
+title: 'Unlimited-OCR от Baidu: OCR, который читает страницу как картинку 📄👁️'
+description: 'Разбираю baidu/Unlimited-OCR — 3B vision-language модель для распознавания документов в духе DeepSeek-OCR. Как работает оптическое сжатие, что умеет, режимы gundam/base, и как запустить через transformers и SGLang. С интерактивом.'
+pubDate: 'Jun 25 2026'
+---
+
+import Callout from '../../components/article/Callout.astro';
+import QuantCard from '../../components/article/QuantCard.astro';
+import StepList from '../../components/article/StepList.astro';
+import OpticalCompressionViz from '../../components/article/OpticalCompressionViz';
+import OcrPipeline from '../../components/article/OcrPipeline';
+
+# Unlimited-OCR от Baidu: OCR, который читает страницу как картинку 📄👁️
+
+Ну чё, малютки, OCR вы себе как представляете? Скан → программа находит буквы → выдаёт текст. Старый добрый Tesseract так и пашет. А вот **baidu/Unlimited-OCR** делает финт ушами: он вообще не «ищет буквы». Он берёт всю страницу **как картинку**, жмёт её в горстку визуальных токенов и скармливает языковой модели, которая разворачивает их обратно в текст. Звучит как извращение — а работает.
+
+Это прямой наследник идеи **DeepSeek-OCR**, и сегодня разложу: что это, как устроено, что умеет и как запустить у себя.
+
+<Callout type="fire" title="Суть за 10 секунд">
+**Unlimited-OCR** — это не распознавалка букв, а **vision-language модель на 3B параметров** (лицензия MIT). Она кодирует страницу документа в визуальные токены (оптическое сжатие, ~в 10 раз компактнее текста), а LLM-декодер превращает их в Markdown — с таблицами, формулами и многостраничными PDF. Контекст до **32K токенов**, поэтому «long-horizon parsing» целых документов за один проход.
+</Callout>
+
+<QuantCard title="3B параметров" badge="Размер" badgeColor="#7c3aed">
+Компактная vision-language модель в BF16. Влезает на одну видеокарту.
+</QuantCard>
+
+<QuantCard title="MIT" badge="Лицензия" badgeColor="#10b981">
+Полностью открытая — бери в коммерцию без плясок с бубном.
+</QuantCard>
+
+<QuantCard title="32 768 токенов" badge="Контекст" badgeColor="#f59e0b">
+Хватает, чтобы распарсить многостраничный документ или PDF за один заход.
+</QuantCard>
+
+---
+
+## Главная идея: оптическое сжатие
+
+Вот в чём вся соль. Если кормить LLM длинный документ **текстом**, токены растут линейно с количеством слов — страница на 1000 слов это ~1400 токенов, десять страниц — уже 14 тысяч. А если ту же страницу закодировать **как картинку**, визуальный энкодер ужимает её в фиксированную горстку токенов (~256 на страницу), почти независимо от того, сколько там текста.
+
+Потыкай — увидишь, как расходятся текстовые и визуальные токены:
+
+<OpticalCompressionViz client:visible />
+
+Профит двойной: документ влезает в контекст целиком (отсюда «Unlimited»), и инференс дешевле — LLM обрабатывает сотни визуальных токенов вместо тысяч текстовых. Именно это придумали в **DeepSeek-OCR**, а Unlimited-OCR, по словам авторов, «толкает идею на шаг дальше» — в сторону длинных документов.
+
+---
+
+## Как работает: пайплайн
+
+Технически это связка «глаза + мозг»: визуальный энкодер видит картинку, языковая модель пишет текст. Жми по шагам:
+
+<OcrPipeline client:visible />
+
+<Callout type="info" title="Откуда корни">
+Авторы прямо благодарят <strong>DeepSeek-OCR</strong>, <strong>DeepSeek-OCR-2</strong> и <strong>PaddleOCR</strong>. То есть Unlimited-OCR — не магия из ниоткуда, а развитие линейки vision-OCR с оптическим сжатием. Точную начинку (какой именно энкодер и декодер) карточка модели не раскрывает, но архитектурно это тот же подход «картинка → визуальные токены → LLM».
+</Callout>
+
+---
+
+## Режимы: gundam vs base
+
+У модели два режима подачи картинки, и это первое, с чем столкнёшься на запуске:
+
+<StepList steps={[
+	{ num: "G", text: "<strong>Gundam</strong> (<code>base_size=1024, image_size=640, crop_mode=True</code>) — картинку режут на тайлы по 640px. Больше деталей для плотных и крупных сканов." },
+	{ num: "B", text: "<strong>Base</strong> (<code>base_size=1024, image_size=1024, crop_mode=False</code>) — страница целиком в 1024px, без нарезки. Проще и быстрее." },
+	{ num: "📑", text: "<strong>Многостраничные и PDF</strong> идут только в base-режиме." },
+]} />
+
+Грубое правило: плотный мелкий текст — gundam, обычная страница — base.
+
+---
+
+## Что умеет
+
+<StepList steps={[
+	{ num: "1", text: "<strong>Парсинг одной картинки</strong> — скан, фото документа → Markdown" },
+	{ num: "2", text: "<strong>Многостраничные документы</strong> — последовательность картинок за один проход" },
+	{ num: "3", text: "<strong>PDF напрямую</strong> — конвертит в картинки с настраиваемым DPI и парсит" },
+	{ num: "4", text: "<strong>Мультиязычность</strong> — модель помечена как multilingual" },
+	{ num: "5", text: "<strong>Структура</strong> — таблицы, формулы, заголовки, а не просто плоский текст" },
+]} />
+
+<Callout type="warning" title="⚠️ Зачем no_repeat_ngram_size=35">
+У OCR-моделей есть болячка — на длинном документе декодер может зациклиться и повторять один и тот же кусок. Поэтому в вызове стоят <code>no_repeat_ngram_size=35</code> и окно <code>ngram_window</code> (128 для одной картинки, 1024 для многостраничных) — это защита от зацикливания генерации. Если на выходе ловишь повторы — крути эти параметры.
+</Callout>
+
+---
+
+## Как запустить
+
+### Вариант 1: transformers (быстро пощупать)
+
+Зависимости (версии из карточки модели):
+
+```bash
+pip install torch==2.10.0 torchvision==0.25.0 transformers==4.57.1 \
+  Pillow==12.1.1 einops==0.8.2 addict easydict pymupdf
+```
+
+Сам инференс одной картинки:
+
+```python
+import torch
+from transformers import AutoModel, AutoTokenizer
+
+tokenizer = AutoTokenizer.from_pretrained('baidu/Unlimited-OCR', trust_remote_code=True)
+model = AutoModel.from_pretrained(
+    'baidu/Unlimited-OCR',
+    trust_remote_code=True,
+    use_safetensors=True,
+    torch_dtype=torch.bfloat16,
+)
+model = model.eval().cuda()
+
+model.infer(
+    tokenizer,
+    prompt='<image>document parsing.',
+    image_file='your_image.jpg',
+    output_path='your/output/dir',
+    base_size=1024, image_size=640, crop_mode=True,   # gundam-режим
+    max_length=32768,
+    no_repeat_ngram_size=35, ngram_window=128,
+    save_results=True,
+)
+```
+
+Результат (Markdown + разметка) ложится в `output_path`. Промпт `<image>document parsing.` — это задача парсинга документа; токен `<image>` — место, куда подставляется картинка.
+
+### Вариант 2: SGLang (для прода / API)
+
+Если нужен сервер с OpenAI-совместимым API — модель поднимается через SGLang:
+
+```bash
+python -m sglang.launch_server --model-path baidu/Unlimited-OCR --trust-remote-code
+```
+
+Дальше дёргаешь обычными запросами в `/v1/chat/completions` с картинкой в content. Точные флаги (порт, размер контекста, tp) смотри в карточке модели — там готовый пример запроса.
+
+<Callout type="tip" title="Что выбрать">
+<strong>transformers</strong> — чтобы за 5 минут проверить на паре картинок. <strong>SGLang</strong> — когда нужен throughput и API под нагрузку (он же даёт батчинг и нормальную утилизацию GPU). Для разовой пакетной обработки PDF хватит и transformers-скрипта в цикле.
+</Callout>
+
+---
+
+## Насколько хорош
+
+По бенчмарку **ParseBench** (llamaindex) у модели средний балл **46.17**: сильна в извлечении самого текста (**Text Content 86.81**), но проседает на сохранении форматирования (**Text Formatting 0.97**). То есть текст вытащит хорошо, а со сложной вёрсткой пока шероховато — это всё-таки молодая 3B-модель, а не финальный продакшен-комбайн.
+
+<Callout type="info" title="Когда брать">
+Unlimited-OCR — отличный выбор, если надо <strong>дёшево и локально</strong> распарсить кучу документов/PDF в текст, особенно длинных (контекст 32K + оптическое сжатие — его конёк). Если критична идеальная вёрстка таблиц — тестируй на своих данных и сравни с PaddleOCR / облачными OCR.
+</Callout>
+
+---
+
+## TL;DR
+
+<StepList steps={[
+	{ num: "1", text: "<strong>Что это:</strong> Baidu Unlimited-OCR, 3B vision-language модель, MIT, в духе DeepSeek-OCR" },
+	{ num: "2", text: "<strong>Фишка:</strong> оптическое сжатие — страница как картинка в ~256 визуальных токенов вместо тысяч текстовых" },
+	{ num: "3", text: "<strong>Умеет:</strong> картинки, многостраничные доки, PDF, мультиязык, таблицы/формулы; контекст 32K" },
+	{ num: "4", text: "<strong>Запуск:</strong> transformers (model.infer) или SGLang-сервер с OpenAI API; режимы gundam/base" },
+]} />
+
+Тренд понятен: OCR превращается из «найди буквы» в «vision-language модель, которая читает страницу глазами». Unlimited-OCR — дешёвый открытый способ это пощупать. Качай с HuggingFace и гоняй свои PDF. 🫡
