@@ -7,18 +7,39 @@ interface Props {
 	heroImage?: string;
 	readingTime?: string;
 	featured?: boolean;
+	category?: string;
 }
 
-const { title, description, date, slug, heroImage, readingTime, featured = false } = Astro.props;
+const { title, description, date, slug, heroImage, readingTime, featured = false, category } = Astro.props;
+
+const CAT_VARS: Record<string, string> = {
+	'фундамент': '--cat-fundament',
+	'тулы': '--cat-tools',
+	'модели': '--cat-models',
+	'хайп': '--cat-hype',
+};
+const catVar = category ? CAT_VARS[category] : undefined;
+
+// Заглушка для статей без обложки: градиент детерминированно по слагу + эмодзи из заголовка
+const emoji = [...title].filter((ch) => /\p{Extended_Pictographic}/u.test(ch)).slice(0, 2).join('') || '🤯';
+const hash = [...slug].reduce((a, c) => a + c.charCodeAt(0), 0);
+const phIndex = hash % 5;
 ---
 
 <a href={`/blog/${slug}/`} class:list={['card', { featured }]}>
-	{heroImage && (
-		<div class="card-image">
+	<div class="card-image">
+		{heroImage ? (
 			<img src={heroImage} alt={title} loading="lazy" />
-			{featured && <span class="featured-badge">Новое</span>}
-		</div>
-	)}
+		) : (
+			<div class={`card-placeholder ph-${phIndex}`} aria-hidden="true">
+				<span class="ph-emoji">{emoji}</span>
+			</div>
+		)}
+		{featured && <span class="featured-badge">Новое</span>}
+		{category && catVar && (
+			<span class="category-chip" style={`--chip: var(${catVar})`}>{category}</span>
+		)}
+	</div>
 	<div class="card-body">
 		<div class="card-meta">
 			<time>{date}</time>
@@ -37,7 +58,8 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 
 <style>
 	.card {
-		display: block;
+		display: flex;
+		flex-direction: column;
 		position: relative;
 		background: var(--bg-card);
 		border-radius: var(--radius);
@@ -47,34 +69,20 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 		transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 	}
 
-	.card::before {
-		content: '';
-		position: absolute;
-		left: 0;
-		top: 0;
-		bottom: 0;
-		width: 3px;
-		background: linear-gradient(180deg, var(--accent), var(--accent-secondary));
-		border-radius: 3px 0 0 3px;
-		opacity: 0;
-		transition: opacity 0.25s ease;
-		z-index: 2;
-	}
-
-	.card:hover::before {
-		opacity: 1;
-	}
-
 	.card:hover {
 		transform: translateY(-4px);
-		border-color: var(--border-light);
-		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+		border-color: transparent;
+		box-shadow:
+			0 0 0 1px var(--accent),
+			0 0 24px rgba(255, 107, 43, 0.25),
+			0 12px 32px rgba(0, 0, 0, 0.4);
 	}
 
 	.card-image {
 		position: relative;
 		overflow: hidden;
 		aspect-ratio: 16/9;
+		flex-shrink: 0;
 	}
 
 	.card-image img {
@@ -88,6 +96,45 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 		transform: scale(1.04);
 	}
 
+	/* ---- Заглушка без обложки ---- */
+	.card-placeholder {
+		width: 100%;
+		height: 100%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		position: relative;
+		background-size: cover;
+	}
+
+	.card-placeholder::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-image:
+			linear-gradient(var(--ph-grid, rgba(255, 255, 255, 0.05)) 1px, transparent 1px),
+			linear-gradient(90deg, var(--ph-grid, rgba(255, 255, 255, 0.05)) 1px, transparent 1px);
+		background-size: 28px 28px;
+	}
+
+	.ph-0 { background: radial-gradient(ellipse at 30% 20%, #2a1a5e, #0b0b1e 75%); }
+	.ph-1 { background: radial-gradient(ellipse at 70% 25%, #4a1440, #0b0b1e 75%); }
+	.ph-2 { background: radial-gradient(ellipse at 25% 70%, #0e3a4a, #0b0b1e 75%); }
+	.ph-3 { background: radial-gradient(ellipse at 70% 70%, #4a2a08, #0b0b1e 75%); }
+	.ph-4 { background: radial-gradient(ellipse at 50% 30%, #14324a, #0b0b1e 75%); }
+
+	.ph-emoji {
+		font-size: 3.4rem;
+		position: relative;
+		filter: drop-shadow(0 0 18px rgba(255, 143, 77, 0.45));
+		transition: transform 0.4s ease;
+	}
+
+	.card:hover .ph-emoji {
+		transform: scale(1.12) rotate(-4deg);
+	}
+
+	/* ---- Бейджи на обложке ---- */
 	.featured-badge {
 		position: absolute;
 		top: 12px;
@@ -104,8 +151,28 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 		z-index: 2;
 	}
 
+	.category-chip {
+		position: absolute;
+		top: 12px;
+		right: 12px;
+		padding: 0.18rem 0.6rem;
+		font-size: 0.68rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		border-radius: 100px;
+		color: var(--chip);
+		background: color-mix(in srgb, var(--chip) 14%, rgba(10, 10, 25, 0.75));
+		border: 1px solid color-mix(in srgb, var(--chip) 55%, transparent);
+		backdrop-filter: blur(4px);
+		z-index: 2;
+	}
+
 	.card-body {
 		padding: 1.1rem 1.3rem 1.3rem;
+		display: flex;
+		flex-direction: column;
+		flex: 1;
 	}
 
 	.card-meta {
@@ -158,7 +225,8 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 		display: inline-flex;
 		align-items: center;
 		gap: 0.3rem;
-		margin-top: 0.8rem;
+		margin-top: auto;
+		padding-top: 0.8rem;
 		font-size: 0.82rem;
 		font-weight: 600;
 		color: var(--accent-light);
@@ -170,7 +238,7 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 		color: var(--accent);
 	}
 
-	/* ---- FEATURED (full width) ---- */
+	/* ---- FEATURED (во всю ширину) ---- */
 	.featured {
 		grid-column: 1 / -1;
 		display: grid;
@@ -197,6 +265,11 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 	.featured p {
 		-webkit-line-clamp: 3;
 		font-size: 0.92rem;
+	}
+
+	.featured .card-link {
+		margin-top: 0.8rem;
+		padding-top: 0;
 	}
 
 	@media (max-width: 650px) {
@@ -242,7 +315,6 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 
 		.card-link {
 			font-size: 0.8rem;
-			padding: 0.3rem 0;
 		}
 
 		.card-meta time {
@@ -252,5 +324,20 @@ const { title, description, date, slug, heroImage, readingTime, featured = false
 		.reading-time {
 			font-size: 0.7rem;
 		}
+
+		.ph-emoji {
+			font-size: 2.6rem;
+		}
 	}
+</style>
+
+<style is:global>
+	/* Заглушки в светлой теме — светлые градиенты и тёмная сетка */
+	[data-theme="light"] .card-placeholder { --ph-grid: rgba(26, 26, 46, 0.06); }
+	[data-theme="light"] .ph-0 { background: radial-gradient(ellipse at 30% 20%, #ded2fb, #f3f0fa 75%); }
+	[data-theme="light"] .ph-1 { background: radial-gradient(ellipse at 70% 25%, #fbd2ec, #f3f0fa 75%); }
+	[data-theme="light"] .ph-2 { background: radial-gradient(ellipse at 25% 70%, #cdeef8, #f3f0fa 75%); }
+	[data-theme="light"] .ph-3 { background: radial-gradient(ellipse at 70% 70%, #fbe4cd, #f3f0fa 75%); }
+	[data-theme="light"] .ph-4 { background: radial-gradient(ellipse at 50% 30%, #d3e6f8, #f3f0fa 75%); }
+	[data-theme="light"] .category-chip { background: color-mix(in srgb, var(--chip) 10%, rgba(255, 255, 255, 0.85)); }
 </style>
