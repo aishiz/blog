@@ -51,7 +51,7 @@ const breadcrumbSchema = {
 				</div>
 				<div class="about-intro">
 					<span class="label">Обо мне</span>
-					<h1>Меня зовут Артемий, и&nbsp;у&nbsp;вас начнётся <span class="highlight">ШИЗА</span></h1>
+					<h1>Меня зовут Артемий, и&nbsp;у&nbsp;вас начнётся <span class="highlight glitch" data-text="ШИЗА">ШИЗА</span></h1>
 					<p class="lead">
 						AI&#8209;Agents, Foundation&nbsp;Models, ML&nbsp;Inference, Managed&nbsp;RAG&nbsp;—
 						всё это моё. Я сам руками поднимал LLM бессонными ночами.
@@ -224,6 +224,51 @@ const breadcrumbSchema = {
 		background-clip: text;
 	}
 
+	/* ---- Глитч на «ШИЗА» (как на главной) ---- */
+	.glitch {
+		position: relative;
+		display: inline-block;
+	}
+
+	.glitch::before,
+	.glitch::after {
+		content: attr(data-text);
+		position: absolute;
+		inset: 0;
+		opacity: 0;
+		pointer-events: none;
+		-webkit-text-fill-color: currentColor;
+		background: none;
+	}
+
+	.glitch::before {
+		color: #23d5e8;
+		animation: glitch-a 5.5s infinite steps(1);
+	}
+
+	.glitch::after {
+		color: var(--accent-magenta);
+		animation: glitch-b 5.5s infinite steps(1);
+	}
+
+	@keyframes glitch-a {
+		0%, 92.9%, 96.1%, 100% { opacity: 0; }
+		93% { opacity: 0.85; transform: translate(-4px, 2px); clip-path: inset(10% 0 55% 0); }
+		94% { opacity: 0.85; transform: translate(3px, -1px); clip-path: inset(60% 0 12% 0); }
+		95% { opacity: 0.85; transform: translate(-2px, 1px); clip-path: inset(30% 0 40% 0); }
+	}
+
+	@keyframes glitch-b {
+		0%, 92.9%, 96.1%, 100% { opacity: 0; }
+		93% { opacity: 0.85; transform: translate(4px, -2px); clip-path: inset(50% 0 20% 0); }
+		94% { opacity: 0.85; transform: translate(-3px, 2px); clip-path: inset(8% 0 65% 0); }
+		95% { opacity: 0.85; transform: translate(2px, -1px); clip-path: inset(70% 0 5% 0); }
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.glitch::before, .glitch::after { animation: none; }
+	}
+
 	.lead {
 		font-size: 1rem;
 		color: var(--text-secondary);
@@ -303,8 +348,9 @@ const breadcrumbSchema = {
 	}
 
 	.stat-card:hover {
-		border-color: var(--border-light);
+		border-color: transparent;
 		transform: translateY(-2px);
+		box-shadow: 0 0 0 1px var(--accent), 0 0 18px rgba(255, 107, 43, 0.2);
 	}
 
 	.stat-card.accent {
@@ -463,8 +509,9 @@ const breadcrumbSchema = {
 	}
 
 	.ach-card:hover {
-		border-color: var(--accent);
+		border-color: transparent;
 		transform: translateY(-3px);
+		box-shadow: 0 0 0 1px var(--accent), 0 0 20px rgba(255, 107, 43, 0.22);
 	}
 
 	.ach-num {

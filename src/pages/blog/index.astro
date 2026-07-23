@@ -29,6 +29,13 @@ const searchData = posts.map((post) => ({
 	date: formatDate(post.data.pubDate),
 }));
 
+const CATEGORIES = [
+	{ key: 'фундамент', varName: '--cat-fundament' },
+	{ key: 'тулы', varName: '--cat-tools' },
+	{ key: 'модели', varName: '--cat-models' },
+	{ key: 'хайп', varName: '--cat-hype' },
+].map((c) => ({ ...c, count: posts.filter((p) => p.data.category === c.key).length }));
+
 const collectionSchema = {
 	"@context": "https://schema.org",
 	"@type": "CollectionPage",
@@ -68,21 +75,47 @@ const collectionSchema = {
 				</div>
 				<p>Мои мысли, заметки и статьи на разные темы</p>
 				<SearchBar client:load posts={searchData} />
+				<div class="filter-row" role="group" aria-label="Фильтр по рубрикам">
+					<button class="filter-chip active" data-cat="">Все <span class="chip-count">{posts.length}</span></button>
+					{CATEGORIES.map((c) => (
+						<button class="filter-chip" data-cat={c.key} style={`--chip: var(${c.varName})`}>
+							{c.key} <span class="chip-count">{c.count}</span>
+						</button>
+					))}
+				</div>
 			</div>
 
 			<div class="posts-grid">
 				{posts.map((post, i) => (
-					<BlogCard
-						title={post.data.title}
-						description={post.data.description}
-						date={formatDate(post.data.pubDate)}
-						slug={post.id}
-						heroImage={post.data.heroImage?.src}
-						readingTime={estimateReadingTime(post.body ?? '')}
-						featured={i === 0}
-					/>
+					<div class:list={['card-wrap', { 'wrap-featured': i === 0 }]} data-category={post.data.category ?? ''}>
+						<BlogCard
+							title={post.data.title}
+							description={post.data.description}
+							date={formatDate(post.data.pubDate)}
+							slug={post.id}
+							heroImage={post.data.heroImage?.src}
+							readingTime={estimateReadingTime(post.body ?? '')}
+							category={post.data.category}
+							featured={i === 0}
+						/>
+					</div>
 				))}
 			</div>
+
+			<script>
+				const chips = document.querySelectorAll<HTMLButtonElement>('.filter-chip');
+				const wraps = document.querySelectorAll<HTMLElement>('.card-wrap');
+				chips.forEach((chip) => {
+					chip.addEventListener('click', () => {
+						chips.forEach((c) => c.classList.remove('active'));
+						chip.classList.add('active');
+						const cat = chip.dataset.cat ?? '';
+						wraps.forEach((w) => {
+							w.style.display = !cat || w.dataset.category === cat ? '' : 'none';
+						});
+					});
+				});
+			</script>
 		</main>
 		<Footer />
 	</body>
@@ -132,10 +165,60 @@ const collectionSchema = {
 		margin-bottom: 1.25rem;
 	}
 
+	.filter-row {
+		display: flex;
+		gap: 0.5rem;
+		flex-wrap: wrap;
+		margin-top: 1rem;
+	}
+
+	.filter-chip {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.35rem 0.85rem;
+		border-radius: 100px;
+		border: 1px solid var(--border);
+		background: var(--bg-card);
+		color: var(--text-secondary);
+		font-size: 0.8rem;
+		font-weight: 600;
+		cursor: pointer;
+		font-family: inherit;
+		transition: all 0.2s ease;
+		--chip: var(--accent);
+	}
+
+	.filter-chip:hover {
+		border-color: color-mix(in srgb, var(--chip) 60%, transparent);
+		color: var(--text);
+	}
+
+	.filter-chip.active {
+		border-color: var(--chip);
+		background: color-mix(in srgb, var(--chip) 14%, var(--bg-card));
+		color: var(--chip);
+	}
+
+	.chip-count {
+		font-size: 0.7rem;
+		font-weight: 700;
+		opacity: 0.65;
+		font-variant-numeric: tabular-nums;
+	}
+
 	.posts-grid {
 		display: grid;
 		grid-template-columns: repeat(2, 1fr);
 		gap: 1.25rem;
+	}
+
+	.card-wrap {
+		display: grid;
+	}
+
+	.wrap-featured {
+		grid-column: 1 / -1;
 	}
 
 	@media (max-width: 768px) {
