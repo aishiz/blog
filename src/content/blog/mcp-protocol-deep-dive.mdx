@@ -1,6 +1,6 @@
 ---
 title: 'MCP изнутри: разбираем протокол по спекам — от JSON-RPC до Tasks в 2025-11-25 🔌📡'
-description: 'Разбираю Model Context Protocol по официальной спецификации: архитектура Host/Client/Server, транспорты, жизненный цикл сессии, все примитивы, эволюция по 4 версиям (2024-11-05 → 2025-11-25) и что нового в последней ревизии — включая Tasks. С интерактивом и сырыми JSON-RPC сообщениями.'
+description: 'Разбираю Model Context Protocol по спецификации: архитектура, транспорты, жизненный цикл, эволюция по 4 версиям (2024-11-05 → 2025-11-25) и что нового в Tasks.'
 pubDate: 'Jul 26 2026'
 category: 'фундамент'
 ---
@@ -11,8 +11,6 @@ import Mermaid from '../../components/article/Mermaid';
 import McpHandshakeDemo from '../../components/article/McpHandshakeDemo';
 import McpVersionTimeline from '../../components/article/McpVersionTimeline';
 import McpTasksDemo from '../../components/article/McpTasksDemo';
-
-# MCP изнутри: разбираем протокол по спекам — от JSON-RPC до Tasks в 2025-11-25 🔌📡
 
 Ну чё, малютки, все уже прикрутили MCP-серверы к своему агенту, а что там внутри — знают единицы. Разберём протокол не «на пальцах», а по официальной спецификации: сырые JSON-RPC сообщения, четыре ревизии стандарта с 2024 по 2025 год, и что именно принесла последняя версия `2025-11-25` — включая свежую экспериментальную фичу Tasks, о которой ещё мало кто писал.
 

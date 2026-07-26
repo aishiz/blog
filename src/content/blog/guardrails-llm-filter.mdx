@@ -1,6 +1,6 @@
 ---
 title: 'Guardrails LLM Filter: чтобы твои секреты не уехали к LLM-провайдеру 🛡️🔑'
-description: 'Разбираю cloud-ru-tech/guardrails-llm-filter — открытый прокси, который маскирует PII и секреты по пути к LLM и возвращает оригиналы в ответе. Запустил демо, погонял карты, СНИЛС и ключи от AWS, прошёлся по всей веб-консоли: правила, песочница, теневой режим, аудит, мониторинг.'
+description: 'Разбираю guardrails-llm-filter — открытый прокси, маскирующий PII и секреты по пути к LLM. Погонял демо: карты, СНИЛС, ключи AWS, вся веб-консоль.'
 pubDate: 'Jul 20 2026'
 category: 'тулы'
 heroImage: '../../assets/guardrails/01_overview.png'
@@ -10,8 +10,6 @@ import Callout from '../../components/article/Callout.astro';
 import QuantCard from '../../components/article/QuantCard.astro';
 import StepList from '../../components/article/StepList.astro';
 import Mermaid from '../../components/article/Mermaid';
-
-# Guardrails LLM Filter: чтобы твои секреты не уехали к LLM-провайдеру 🛡️🔑
 
 Ну чё, малютки, признавайтесь: кто хоть раз кидал в чатик с LLM кусок лога с боевым токеном? Или письмо клиента с его телефоном и картой — «перепиши повежливее»? Всё это уезжает провайдеру, оседает в логах на чужой стороне, а у безопасников дёргается глаз. А если у тебя ещё и агенты сами собирают контекст из базы и тикетов — ты вообще не контролируешь, что улетает в промпт.
 

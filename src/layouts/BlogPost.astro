@@ -455,7 +455,7 @@ const breadcrumbSchema = {
 				showObserver.observe(prose);
 			}
 
-			const headings = document.querySelectorAll('.prose h1, .prose h2, .prose h3');
+			const headings = document.querySelectorAll('.prose h2, .prose h3');
 			if (headings.length === 0) {
 				const toc = document.querySelector('.toc') as HTMLElement;
 				if (toc) toc.style.display = 'none';

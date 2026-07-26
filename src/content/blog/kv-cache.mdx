@@ -14,8 +14,6 @@ import KvCacheGrowth from '../../components/article/KvCacheGrowth';
 import AttentionVariants from '../../components/article/AttentionVariants';
 import KvCacheCalculator from '../../components/article/KvCacheCalculator';
 
-# KV-кэш: почему LLM помнит без памяти и жрёт VRAM как не в себя 🧠💾
-
 Ну чё, малютки, замечали такое: даёшь модели длинный промпт — она думает целую вечность перед первым словом, а потом строчит токены пулемётом? Или хостишь модельку на жирной видяхе, всё влезает — а на длинном контексте внезапно **OOM** и краш? За обоими случаями стоит одна штука — **KV-кэш**.
 
 Без него генерация была бы в разы медленнее. С ним — у тебя на ровном месте кончается VRAM. Разберём, что это и зачем.

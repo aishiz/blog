@@ -1,6 +1,6 @@
 ---
 title: 'Structured Outputs: как LLM заставляют выдавать валидный JSON под дулом пистолета 🔫📋'
-description: 'Разбираю constrained decoding по полочкам: почему «отвечай строго JSON» в промпте не работает, как logit masking и конечные автоматы делают невалидный вывод физически невозможным, чем платим за гарантию, и кто это умеет — Outlines, XGrammar, vLLM, llama.cpp, OpenAI, Anthropic. С интерактивом и шизой.'
+description: 'Разбираю constrained decoding: почему «отвечай строго JSON» не работает и как logit masking делает невалидный вывод невозможным — Outlines, XGrammar, vLLM, llama.cpp.'
 pubDate: 'Jul 22 2026'
 category: 'фундамент'
 ---
@@ -10,8 +10,6 @@ import StepList from '../../components/article/StepList.astro';
 import LogitMaskingDemo from '../../components/article/LogitMaskingDemo';
 import JsonFsmWalkthrough from '../../components/article/JsonFsmWalkthrough';
 import ConstraintQualityDemo from '../../components/article/ConstraintQualityDemo';
-
-# Structured Outputs: как LLM заставляют выдавать валидный JSON под дулом пистолета 🔫📋
 
 Ну чё, малютки, знакомая картина: пишешь в промпте «отвечай СТРОГО валидным JSON, без лишнего текста», а модель отвечает: «Конечно! Вот ваш JSON:», заворачивает его в ```` ```json ````, ставит лишнюю запятую и добавляет в конце «Надеюсь, помог! 😊». Твой `json.loads()` падает, ты пишешь регексы, ретраи, стрипаешь бэктики — и всё равно раз в сотню запросов прилетает мусор.
 

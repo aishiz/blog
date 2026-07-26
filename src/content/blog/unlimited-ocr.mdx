@@ -11,8 +11,6 @@ import StepList from '../../components/article/StepList.astro';
 import OpticalCompressionViz from '../../components/article/OpticalCompressionViz';
 import OcrPipeline from '../../components/article/OcrPipeline';
 
-# Unlimited-OCR от Baidu: OCR, который читает страницу как картинку 📄👁️
-
 Ну чё, малютки, OCR вы себе как представляете? Скан → программа находит буквы → выдаёт текст. Старый добрый Tesseract так и пашет. А вот **baidu/Unlimited-OCR** делает финт ушами: он вообще не «ищет буквы». Он берёт всю страницу **как картинку**, жмёт её в горстку визуальных токенов и скармливает языковой модели, которая разворачивает их обратно в текст. Звучит как извращение — а работает.
 
 Это прямой наследник идеи **DeepSeek-OCR**, и сегодня разложу: что это, как устроено, что умеет и как запустить у себя.

@@ -17,8 +17,6 @@ import PagedAttentionDemo from '../../components/article/PagedAttentionDemo';
 import PlatformMatrix from '../../components/article/PlatformMatrix';
 import ThroughputCalculator from '../../components/article/ThroughputCalculator';
 
-# Инференс-движки для LLM: Как перестать гонять модели через transformers и начать жить 🫡
-
 Ну чё, малютки, думаете что запустить LLM — это `model.generate()` и готово? Поздравляю, вас обманули туториалы с Hugging Face 🫡 Когда к твоему сервису приходят сотни юзеров одновременно, наивный подход через `transformers` разваливается как карточный домик: GPU простаивает между запросами, KV-кэш не переиспользуется, память жрётся как будто её бесконечно. _Это как пытаться обслужить ресторан на 200 мест одной микроволновкой._
 
 <Callout type="fire" title="Суть за 10 секунд">
