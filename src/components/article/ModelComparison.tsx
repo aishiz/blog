@@ -105,7 +105,7 @@ const css = {
 		fontSize: '0.75rem',
 		fontWeight: isBest ? 800 : 600,
 		color: isBest ? 'white' : 'var(--text-secondary)',
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 	} as React.CSSProperties),
 	legend: {
 		display: 'flex',

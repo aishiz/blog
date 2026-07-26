@@ -134,7 +134,7 @@ const css = {
 		fontSize: '1.1rem',
 		fontWeight: 900,
 		color: fits ? 'var(--text)' : '#ef4444',
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 		minWidth: '90px',
 	} as React.CSSProperties),
 	meta: {
@@ -173,7 +173,7 @@ const css = {
 		fontSize: '0.78rem',
 		fontWeight: 800,
 		color: 'var(--accent-light)',
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 	} as React.CSSProperties,
 	vramTrack: {
 		height: '12px',

@@ -208,7 +208,7 @@ const css = {
 		borderRadius: '8px',
 		background: 'var(--bg-secondary)',
 		border: '1px solid var(--border)',
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 		fontSize: '0.82rem',
 		color: 'var(--text)',
 		overflowX: 'auto' as const,

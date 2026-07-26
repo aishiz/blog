@@ -1,5 +1,9 @@
 ---
 import '../styles/global.css';
+// Самохостинг вместо Google Fonts: убирает render-blocking запрос к стороннему
+// origin и связанный с ним CLS от подмены шрифта (font swap).
+import '@fontsource-variable/inter/wght.css';
+import '@fontsource-variable/jetbrains-mono/wght.css';
 import type { ImageMetadata } from 'astro';
 import { SITE_TITLE, SITE_DESCRIPTION, AUTHOR_NAME } from '../consts';
 
@@ -55,11 +59,6 @@ const ogImageURL = image ? new URL(image.src, Astro.site) : new URL('/og-default
 
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 <meta name="author" content={AUTHOR_NAME} />
-
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
 <link rel="canonical" href={canonicalURL} />
 

@@ -91,7 +91,7 @@ export default function SkillAnatomy() {
 						borderRadius: '8px', background: 'var(--bg-secondary)',
 						border: '1px solid var(--border)', marginBottom: '0.5rem',
 						fontSize: mobile ? '0.82rem' : '0.9rem', fontWeight: 700, color: 'var(--text)',
-						fontFamily: "'JetBrains Mono', monospace",
+						fontFamily: "'JetBrains Mono Variable', monospace",
 					}}>
 						📂 my-skill/
 					</div>
@@ -113,7 +113,7 @@ export default function SkillAnatomy() {
 							>
 								<span style={{
 									fontSize: mobile ? '0.78rem' : '0.85rem', fontWeight: 700,
-									color: f.color, fontFamily: "'JetBrains Mono', monospace",
+									color: f.color, fontFamily: "'JetBrains Mono Variable', monospace",
 									flex: 1,
 								}}>
 									{f.name}

@@ -194,7 +194,7 @@ const css = {
 		fontSize: '0.85rem',
 		fontWeight: 900,
 		color: color,
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 	} as React.CSSProperties),
 	autonomyTrack: {
 		height: '12px',

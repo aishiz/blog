@@ -229,7 +229,7 @@ export default function HeroOverview() {
 						</span>
 						<span style={{
 							fontSize: '0.78rem', fontWeight: 900, color: p.color,
-							fontFamily: "'JetBrains Mono', monospace",
+							fontFamily: "'JetBrains Mono Variable', monospace",
 						}}>
 							{p.autonomy}%
 						</span>

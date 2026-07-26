@@ -189,7 +189,7 @@ export default function AgentLoopViz() {
 										fontSize: mobile ? '0.8rem' : '0.86rem',
 										color: 'var(--text)',
 										lineHeight: 1.5,
-										fontFamily: s.phase === 'call' ? "'JetBrains Mono', monospace" : 'inherit',
+										fontFamily: s.phase === 'call' ? "'JetBrains Mono Variable', monospace" : 'inherit',
 									}}
 								>
 									{s.text}

@@ -147,7 +147,7 @@ const css = {
 		fontSize: '0.78rem',
 		fontWeight: 800,
 		color: 'white',
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 		textShadow: '0 1px 2px rgba(0,0,0,0.3)',
 	} as React.CSSProperties,
 	legend: {

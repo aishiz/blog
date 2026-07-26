@@ -140,7 +140,7 @@ const css = {
 	barPop: {
 		fontSize: '0.78rem',
 		fontWeight: 800,
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 	} as React.CSSProperties,
 	barTrack: {
 		height: '32px',
@@ -166,7 +166,7 @@ const css = {
 		fontSize: '0.72rem',
 		fontWeight: 800,
 		color: 'white',
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 	} as React.CSSProperties,
 	detailBox: {
 		padding: '1rem 1.25rem',

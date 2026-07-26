@@ -29,7 +29,7 @@ const phIndex = hash % 5;
 <a href={`/blog/${slug}/`} class:list={['card', { featured }]}>
 	<div class="card-image">
 		{heroImage ? (
-			<img src={heroImage} alt={title} loading="lazy" />
+			<img src={heroImage} alt={title} loading={featured ? 'eager' : 'lazy'} fetchpriority={featured ? 'high' : 'auto'} />
 		) : (
 			<div class={`card-placeholder ph-${phIndex}`} aria-hidden="true">
 				<span class="ph-emoji">{emoji}</span>

@@ -5,7 +5,7 @@ import BaseHead from '../components/BaseHead.astro';
 import BlogCard from '../components/BlogCard.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
-import ScrollToTop from '../components/ScrollToTop';
+import ScrollToTop from '../components/ScrollToTop.astro';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import avatar from '../assets/photo_2026-02-11_16-09-08.jpg';
 
@@ -65,7 +65,7 @@ const websiteSchema = {
 	</head>
 	<body>
 		<Header />
-		<ScrollToTop client:load />
+		<ScrollToTop />
 		<main>
 			<section class="hero" aria-label="О блоге">
 				<div class="hero-avatar">

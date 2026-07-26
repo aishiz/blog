@@ -297,7 +297,7 @@ export default function SkillOrchestrator() {
 						fontSize: mobile ? '0.65rem' : '0.72rem',
 						fontWeight: 700,
 						color: contextPct > 75 ? '#ef4444' : 'var(--accent-light)',
-						fontFamily: "'JetBrains Mono', monospace",
+						fontFamily: "'JetBrains Mono Variable', monospace",
 					}}>
 						{loadedIds.length}/{CONTEXT_MAX}
 					</span>

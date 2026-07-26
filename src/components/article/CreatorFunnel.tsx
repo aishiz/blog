@@ -148,7 +148,7 @@ export default function CreatorFunnel() {
 							<span style={{
 								fontSize: mobile ? '0.72rem' : '0.82rem', fontWeight: 800,
 								color: reached ? color : 'var(--text-muted)',
-								fontFamily: "'JetBrains Mono', monospace", flexShrink: 0,
+								fontFamily: "'JetBrains Mono Variable', monospace", flexShrink: 0,
 							}}>
 								~{reached ? survival : '?'}%
 							</span>

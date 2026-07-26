@@ -101,7 +101,7 @@ export default function SkillLifecycle() {
 								</span>
 								<span style={{
 									fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)',
-									fontFamily: "'JetBrains Mono', monospace",
+									fontFamily: "'JetBrains Mono Variable', monospace",
 								}}>
 									{cat.skills.length} skills
 								</span>
@@ -127,7 +127,7 @@ export default function SkillLifecycle() {
 											background: `${cat.color}08`,
 											fontSize: mobile ? '0.62rem' : '0.68rem',
 											fontWeight: 600, color: cat.color,
-											fontFamily: "'JetBrains Mono', monospace",
+											fontFamily: "'JetBrains Mono Variable', monospace",
 											whiteSpace: 'nowrap' as const,
 											overflow: 'hidden', textOverflow: 'ellipsis',
 										}}>

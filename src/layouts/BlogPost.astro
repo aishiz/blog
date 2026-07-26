@@ -7,7 +7,7 @@ import Footer from '../components/Footer.astro';
 import FormattedDate from '../components/FormattedDate.astro';
 import Header from '../components/Header.astro';
 import ReadingProgress from '../components/ReadingProgress';
-import ScrollToTop from '../components/ScrollToTop';
+import ScrollToTop from '../components/ScrollToTop.astro';
 import { SITE_TITLE, AUTHOR_NAME } from '../consts';
 
 type Props = CollectionEntry<'blog'>['data'] & {
@@ -73,7 +73,7 @@ const breadcrumbSchema = {
 	<body>
 		<Header />
 		<ReadingProgress client:load />
-		<ScrollToTop client:load />
+		<ScrollToTop />
 		<main>
 			<div class="article-top">
 				<nav class="breadcrumbs" aria-label="Навигация">
@@ -109,7 +109,7 @@ const breadcrumbSchema = {
 
 				{heroImage && (
 					<div class="hero-image">
-						<Image width={960} height={480} src={heroImage} alt={title} />
+						<Image width={960} height={480} src={heroImage} alt={title} loading="eager" fetchpriority="high" />
 					</div>
 				)}
 			</div>

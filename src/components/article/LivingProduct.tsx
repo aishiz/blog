@@ -190,7 +190,7 @@ const css = {
 		background: `${color}15`,
 		color: color,
 		border: `1px solid ${color}30`,
-		fontFamily: "'JetBrains Mono', monospace",
+		fontFamily: "'JetBrains Mono Variable', monospace",
 	} as React.CSSProperties),
 	stats: {
 		display: 'flex',

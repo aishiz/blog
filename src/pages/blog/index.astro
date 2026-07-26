@@ -4,7 +4,7 @@ import BaseHead from '../../components/BaseHead.astro';
 import BlogCard from '../../components/BlogCard.astro';
 import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
-import ScrollToTop from '../../components/ScrollToTop';
+import ScrollToTop from '../../components/ScrollToTop.astro';
 import SearchBar from '../../components/SearchBar';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
@@ -66,7 +66,7 @@ const collectionSchema = {
 	</head>
 	<body>
 		<Header />
-		<ScrollToTop client:load />
+		<ScrollToTop />
 		<main>
 			<div class="page-header">
 				<div class="page-title-row">
