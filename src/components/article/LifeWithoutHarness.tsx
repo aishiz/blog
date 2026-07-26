@@ -31,10 +31,12 @@ const WITH: Row[] = [
 	{ actor: 'llm', text: 'Готово, отчитываюсь юзеру 🫡' },
 ];
 
+// Цвета затемнены относительно чистых акцентов — на бейдже ниже белый текст,
+// а без этого контраст не проходит WCAG AA (4.5:1).
 const ACTOR_META: Record<Actor, { label: string; color: string; icon: string }> = {
-	you: { label: 'ТЫ, вручную', color: '#ef4444', icon: '🩸' },
-	llm: { label: 'LLM', color: '#8b5cf6', icon: '🧠' },
-	harness: { label: 'Харнес', color: '#ff6b2b', icon: '⚙️' },
+	you: { label: 'ТЫ, вручную', color: '#d73d3d', icon: '🩸' },
+	llm: { label: 'LLM', color: '#8457ea', icon: '🧠' },
+	harness: { label: 'Харнес', color: '#bf5020', icon: '⚙️' },
 };
 
 function useIsMobile(bp = 480) {

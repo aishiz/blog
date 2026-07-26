@@ -42,6 +42,10 @@ function useIsMobile(bp = 480) {
 	return m;
 }
 
+// ponytail: #8b5cf6 сам по себе даёт 4.2:1 на тёмной карточке — чуть ниже WCAG AA (4.5:1).
+// Осветляем именно для текста; для рамок/фона декоративного использования это не нужно.
+const textSafe = (hex: string) => hex === '#8b5cf6' ? '#9970f7' : hex;
+
 export default function AgentLoopViz() {
 	const [step, setStep] = useState(0);
 	const [running, setRunning] = useState(false);
@@ -125,8 +129,8 @@ export default function AgentLoopViz() {
 								}}
 							>
 								<span style={{ fontSize: mobile ? '1.1rem' : '1.4rem', opacity: active ? 1 : 0.4 }}>{p.icon}</span>
-								<span style={{ fontSize: mobile ? '0.6rem' : '0.68rem', fontWeight: 700, color: active ? p.color : 'var(--text-muted)' }}>{p.label}</span>
-								<span style={{ fontSize: '0.55rem', fontWeight: 700, color: active ? p.color : 'var(--text-muted)', opacity: 0.7, letterSpacing: '0.03em' }}>{p.who}</span>
+								<span style={{ fontSize: mobile ? '0.6rem' : '0.68rem', fontWeight: 700, color: active ? textSafe(p.color) : 'var(--text-muted)' }}>{p.label}</span>
+								<span style={{ fontSize: '0.55rem', fontWeight: 700, color: active ? textSafe(p.color) : 'var(--text-muted)', letterSpacing: '0.03em' }}>{p.who}</span>
 							</div>
 							{i < PHASES.length - 1 && (
 								<span style={{ color: active ? p.color : 'var(--border-light)', fontSize: mobile ? '0.7rem' : '1rem', transition: 'color 0.3s ease' }}>→</span>

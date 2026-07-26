@@ -170,7 +170,12 @@ export default function RebrandDrama() {
 				{BRANDS.map((b, i) => (
 					<div
 						key={i}
+						role="button"
+						tabIndex={0}
+						aria-label={b.name}
+						aria-current={step === i}
 						onClick={() => setStep(i)}
+						onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStep(i); } }}
 						style={{
 							width: step === i ? '24px' : '8px',
 							height: '8px',

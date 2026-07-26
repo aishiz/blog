@@ -61,6 +61,8 @@ export default function KimiBenchmarkChart() {
 			{BENCHMARKS.map((b, i) => (
 				<div
 					key={i}
+					role="button"
+					tabIndex={0}
 					style={{
 						marginBottom: i < BENCHMARKS.length - 1 ? '1rem' : 0,
 						cursor: 'pointer',
@@ -74,6 +76,7 @@ export default function KimiBenchmarkChart() {
 						justifyContent: 'center',
 					} as React.CSSProperties}
 					onClick={() => setActive(active === i ? null : i)}
+					onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(active === i ? null : i); } }}
 				>
 					<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
 						<span style={{ fontSize: mobile ? '0.82rem' : '0.88rem', fontWeight: 600, color: 'var(--text)', lineHeight: 1.3 }}>

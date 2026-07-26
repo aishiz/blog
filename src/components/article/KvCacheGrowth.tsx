@@ -200,6 +200,7 @@ export default function KvCacheGrowth() {
 
 			<div style={css.controls}>
 				<input
+					aria-label="Длина контекста"
 					type="range"
 					min={1024}
 					max={MAX_CTX}

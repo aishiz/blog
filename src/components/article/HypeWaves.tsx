@@ -9,7 +9,7 @@ const WAVES = [
 		stars: '10K → 40K звёзд',
 		trigger: 'Clawdbot на GitHub\nПост Штайнбергера в X',
 		color: '#3b82f6',
-		gradient: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+		gradient: 'linear-gradient(135deg, #326ed1, #2563eb)', // затемнено под белый текст — 4.5:1 (WCAG AA)
 	},
 	{
 		num: 2,
@@ -19,7 +19,7 @@ const WAVES = [
 		stars: '40K → 130K звёзд',
 		trigger: 'Конфликт с Anthropic\nДва ребрендинга за 72 часа',
 		color: '#ff6b2b',
-		gradient: 'linear-gradient(135deg, #ff6b2b, #f97316)',
+		gradient: 'linear-gradient(135deg, #bf5020, #bb5610)', // затемнено под белый текст — 4.5:1 (WCAG AA)
 	},
 	{
 		num: 3,
@@ -29,7 +29,7 @@ const WAVES = [
 		stars: '130K → 250K звёзд',
 		trigger: 'Forbes, WIRED, Guardian\nНайм в OpenAI\nРост продаж Mac mini',
 		color: '#10b981',
-		gradient: 'linear-gradient(135deg, #10b981, #059669)',
+		gradient: 'linear-gradient(135deg, #0b825a, #04875e)', // затемнено под белый текст — 4.5:1 (WCAG AA)
 	},
 ];
 

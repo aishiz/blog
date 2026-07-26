@@ -431,6 +431,9 @@ export default function LivingProduct() {
 						padding: '0.5rem 0',
 					}}>
 						<div
+							role="button"
+							tabIndex={0}
+							aria-label="Ядро продукта"
 							style={{
 								width: '48px',
 								height: '48px',
@@ -445,6 +448,7 @@ export default function LivingProduct() {
 								cursor: 'pointer',
 							}}
 							onClick={() => setSelectedId('core')}
+							onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelectedId('core'); } }}
 						>
 							🏠
 						</div>
@@ -453,6 +457,10 @@ export default function LivingProduct() {
 							return (
 								<div
 									key={mod.id}
+									role="button"
+									tabIndex={added ? 0 : -1}
+									aria-disabled={!added}
+									aria-label={mod.name}
 									style={{
 										width: '48px',
 										height: '48px',
@@ -468,6 +476,7 @@ export default function LivingProduct() {
 										transition: 'all 0.3s ease',
 									}}
 									onClick={() => { if (added) setSelectedId(mod.id); }}
+									onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && added) { e.preventDefault(); setSelectedId(mod.id); } }}
 								>
 									{added ? mod.icon : '?'}
 								</div>

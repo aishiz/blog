@@ -80,7 +80,10 @@ export default function HarnessComparison() {
 					return (
 						<div
 							key={h.name}
+							role="button"
+							tabIndex={0}
 							onClick={() => setOpen(isOpen ? null : h.name)}
+							onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setOpen(isOpen ? null : h.name); } }}
 							style={{
 								borderRadius: '10px',
 								border: `1px solid ${isOpen ? h.color + '60' : 'var(--border)'}`,
@@ -93,7 +96,7 @@ export default function HarnessComparison() {
 							<div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem', padding: mobile ? '0.6rem 0.75rem' : '0.7rem 1rem' }}>
 								<span style={{ width: '8px', height: '8px', borderRadius: '50%', background: h.color, flexShrink: 0 }} />
 								<span style={{ fontWeight: 700, color: 'var(--text)', fontSize: mobile ? '0.86rem' : '0.95rem', flexShrink: 0 }}>{h.name}</span>
-								<span style={{ fontSize: '0.6rem', fontWeight: 700, color: h.color, border: `1px solid ${h.color}55`, borderRadius: '100px', padding: '0.1rem 0.45rem', textTransform: 'uppercase' as const, flexShrink: 0 }}>
+								<span style={{ fontSize: '0.6rem', fontWeight: 700, color: h.color === '#8b5cf6' ? '#9970f7' : h.color, border: `1px solid ${h.color}55`, borderRadius: '100px', padding: '0.1rem 0.45rem', textTransform: 'uppercase' as const, flexShrink: 0 }}>
 									{h.kind}
 								</span>
 								{!mobile && <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>{h.what}</span>}

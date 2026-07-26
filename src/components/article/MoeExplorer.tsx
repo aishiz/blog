@@ -137,11 +137,15 @@ export default function MoeExplorer() {
 			</div>
 
 			<div
+				role="button"
+				tabIndex={0}
+				aria-label="Сгенерировать новый пример активации"
 				style={{
 					...css.grid,
 					...(mobile ? { gridTemplateColumns: 'repeat(8, 1fr)', gap: '3px', marginBottom: '1rem' } : {}),
 				}}
 				onClick={() => { shuffle(); setAuto(false); }}
+				onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); shuffle(); setAuto(false); } }}
 			>
 				{Array.from({ length: TOTAL_EXPERTS }, (_, i) => (
 					<div key={i} style={{

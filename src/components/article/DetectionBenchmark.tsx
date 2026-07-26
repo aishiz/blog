@@ -139,9 +139,14 @@ export default function DetectionBenchmark() {
 					return (
 						<div
 							key={m.name}
+							role="button"
+							tabIndex={0}
 							onClick={() => mobile && setTappedModel(tappedModel === m.name ? null : m.name)}
+							onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setTappedModel(tappedModel === m.name ? null : m.name); } }}
 							onMouseEnter={() => !mobile && setTappedModel(m.name)}
 							onMouseLeave={() => !mobile && setTappedModel(null)}
+							onFocus={() => !mobile && setTappedModel(m.name)}
+							onBlur={() => !mobile && setTappedModel(null)}
 							style={{
 								display: 'flex', alignItems: 'center',
 								gap: mobile ? '0.3rem' : '0.75rem',

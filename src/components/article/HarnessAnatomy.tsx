@@ -62,6 +62,7 @@ export default function HarnessAnatomy() {
 		node = (
 			<div
 				key={l.id}
+				aria-hidden="true"
 				onClick={(e) => {
 					e.stopPropagation();
 					setSel(l.id);
@@ -141,7 +142,7 @@ export default function HarnessAnatomy() {
 							<span style={{ fontWeight: 800, color: 'var(--text)', fontSize: mobile ? '0.95rem' : '1.05rem' }}>{selected.name}</span>
 						</div>
 						<div style={{ fontSize: mobile ? '0.82rem' : '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '0.6rem' }}>{selected.role}</div>
-						<div style={{ fontSize: mobile ? '0.78rem' : '0.83rem', color: selected.color, lineHeight: 1.5, fontWeight: 600 }}>
+						<div style={{ fontSize: mobile ? '0.78rem' : '0.83rem', color: selected.color === '#8b5cf6' ? '#9970f7' : selected.color, lineHeight: 1.5, fontWeight: 600 }}>
 							💥 {selected.breaks}
 						</div>
 					</div>

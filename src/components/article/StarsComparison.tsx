@@ -60,6 +60,8 @@ export default function StarsComparison() {
 				return (
 					<div
 						key={i}
+						role="button"
+						tabIndex={0}
 						style={{
 							marginBottom: i < PROJECTS.length - 1 ? '0.9rem' : 0,
 							cursor: 'pointer',
@@ -71,6 +73,7 @@ export default function StarsComparison() {
 							justifyContent: 'center',
 						} as React.CSSProperties}
 						onClick={() => setActive(active === i ? null : i)}
+						onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(active === i ? null : i); } }}
 					>
 						<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.3rem' }}>
 							<span style={{

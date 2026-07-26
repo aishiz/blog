@@ -134,6 +134,7 @@ export default function SpecSpeedupCalc() {
 					<span style={css.sliderVal}>{Math.round(alpha * 100)}%</span>
 				</div>
 				<input
+					aria-label="Acceptance rate"
 					type="range" min={0.3} max={0.98} step={0.01} value={alpha}
 					onChange={(e) => setAlpha(parseFloat(e.target.value))}
 					style={css.slider}
@@ -147,6 +148,7 @@ export default function SpecSpeedupCalc() {
 					<span style={css.sliderVal}>{k} токенов</span>
 				</div>
 				<input
+					aria-label="Длина черновика"
 					type="range" min={1} max={10} step={1} value={k}
 					onChange={(e) => setK(parseInt(e.target.value))}
 					style={css.slider}
@@ -160,6 +162,7 @@ export default function SpecSpeedupCalc() {
 					<span style={css.sliderVal}>{Math.round(draftCost * 100)}% от большой модели</span>
 				</div>
 				<input
+					aria-label="Цена черновика"
 					type="range" min={0.02} max={0.6} step={0.01} value={draftCost}
 					onChange={(e) => setDraftCost(parseFloat(e.target.value))}
 					style={css.slider}

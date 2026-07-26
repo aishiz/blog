@@ -6,12 +6,38 @@ interface Props {
 }
 
 const { title, badge, badgeColor = 'var(--accent)' } = Astro.props;
+
+// ponytail: badgeColor приходит с произвольным hex из каждой статьи, а бейдж всегда
+// белым текстом — на светлых акцентах (жёлтый, голубой) контраст ниже WCAG AA (4.5:1).
+// Затемняем фон ровно настолько, чтобы белый текст стабильно проходил, вместо того
+// чтобы переподбирать цвет руками в полусотне мест.
+function relLuminance([r, g, b]: number[]) {
+	const f = (c: number) => (c /= 255) <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+	return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+}
+function contrast(rgb1: number[], rgb2: number[]) {
+	const l1 = relLuminance(rgb1), l2 = relLuminance(rgb2);
+	const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
+	return (hi + 0.05) / (lo + 0.05);
+}
+function ensureContrastBg(hex: string, minRatio = 4.5): string {
+	if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex; // не hex (var(--...)) — не трогаем
+	const rgb = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+	let mix = 0;
+	let darkened = rgb;
+	while (contrast([255, 255, 255], darkened) < minRatio && mix < 0.9) {
+		mix += 0.05;
+		darkened = rgb.map((c) => c * (1 - mix));
+	}
+	return `rgb(${darkened.map((c) => Math.round(c)).join(', ')})`;
+}
+const safeBadgeBg = ensureContrastBg(badgeColor);
 ---
 
 <div class="qcard">
 	<div class="qcard-header">
 		<span class="qcard-title">{title}</span>
-		{badge && <span class="qcard-badge" style={`background: ${badgeColor}`}>{badge}</span>}
+		{badge && <span class="qcard-badge" style={`background: ${safeBadgeBg}`}>{badge}</span>}
 	</div>
 	<div class="qcard-body">
 		<slot />

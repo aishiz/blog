@@ -290,8 +290,12 @@ export default function MarketExpansion() {
 								</span>
 							</div>
 							<div
+								role="button"
+								tabIndex={0}
+								aria-label={`Подробнее: ${seg.label}`}
 								style={{ ...css.barTrack, ...(mobile ? { height: '26px', borderRadius: '6px' } : {}) }}
 								onClick={() => setHoveredIdx(hoveredIdx === i ? null : i)}
+								onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setHoveredIdx(hoveredIdx === i ? null : i); } }}
 								onMouseEnter={() => { if (!mobile) setHoveredIdx(i); }}
 								onMouseLeave={() => { if (!mobile) setHoveredIdx(null); }}
 							>

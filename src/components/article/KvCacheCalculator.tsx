@@ -105,7 +105,7 @@ export default function KvCacheCalculator() {
 
 			<div style={css.field}>
 				<label style={css.label}>Модель</label>
-				<select style={css.select} value={modelId} onChange={(e) => setModelId(e.target.value)}>
+				<select aria-label="Модель" style={css.select} value={modelId} onChange={(e) => setModelId(e.target.value)}>
 					{MODELS.map((m) => <option key={m.id} value={m.id}>{m.name} · {m.tag}</option>)}
 				</select>
 			</div>

@@ -104,6 +104,7 @@ export default function ScalingFactorViz() {
 				{/* Slider — taller touch target */}
 				<div style={{ padding: mobile ? '8px 0' : '4px 0' }}>
 					<input
+						aria-label="Коэффициент масштабирования вычислений"
 						type="range" min={0} max={4} step={0.1} value={factor}
 						onChange={e => setFactor(parseFloat(e.target.value))}
 						style={{

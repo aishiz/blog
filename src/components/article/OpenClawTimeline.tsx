@@ -127,7 +127,10 @@ export default function OpenClawTimeline() {
 					return (
 						<div
 							key={i}
+							role="button"
+							tabIndex={0}
 							onClick={() => setActive(isActive ? null : i)}
+							onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(isActive ? null : i); } }}
 							style={{
 								position: 'relative' as const,
 								marginBottom: i < EVENTS.length - 1 ? '0.75rem' : 0,

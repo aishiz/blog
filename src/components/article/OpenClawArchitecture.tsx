@@ -89,7 +89,10 @@ export default function OpenClawArchitecture() {
 					return (
 						<div key={layer.id}>
 							<div
+								role="button"
+								tabIndex={0}
 								onClick={() => setActiveLayer(isActive ? null : i)}
+								onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveLayer(isActive ? null : i); } }}
 								style={{
 									padding: mobile ? '0.75rem' : '1rem',
 									borderRadius: '10px',

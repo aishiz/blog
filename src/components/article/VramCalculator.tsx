@@ -49,6 +49,7 @@ export default function VramCalculator() {
 						Модель
 					</label>
 					<select
+						aria-label="Модель"
 						value={modelIdx}
 						onChange={(e) => setModelIdx(Number(e.target.value))}
 						style={{
@@ -74,6 +75,7 @@ export default function VramCalculator() {
 						Точность
 					</label>
 					<select
+						aria-label="Точность"
 						value={precIdx}
 						onChange={(e) => setPrecIdx(Number(e.target.value))}
 						style={{

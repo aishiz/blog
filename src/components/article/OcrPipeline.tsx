@@ -69,7 +69,13 @@ export default function OcrPipeline() {
 			<div style={{ ...css.flow, ...(mobile ? { flexDirection: 'column' as const } : {}) }}>
 				{STAGES.map((s, i) => (
 					<div key={i} style={{ display: mobile ? 'block' : 'contents' }}>
-						<div style={css.stage(i === step, mobile)} onClick={() => { setStep(i); setAuto(false); }}>
+						<div
+							role="button"
+							tabIndex={0}
+							style={css.stage(i === step, mobile)}
+							onClick={() => { setStep(i); setAuto(false); }}
+							onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setStep(i); setAuto(false); } }}
+						>
 							{mobile ? (
 								<div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
 									<span style={{ fontSize: '1.2rem' }}>{s.icon}</span>

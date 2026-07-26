@@ -110,6 +110,8 @@ export default function ValuationTimeline() {
 				{MILESTONES.map((m, i) => (
 					<div
 						key={i}
+						role="button"
+						tabIndex={0}
 						style={{
 							position: 'relative',
 							marginBottom: i < MILESTONES.length - 1 ? '0.75rem' : 0,
@@ -121,6 +123,7 @@ export default function ValuationTimeline() {
 							touchAction: 'manipulation',
 						} as React.CSSProperties}
 						onClick={() => setActive(active === i ? null : i)}
+						onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(active === i ? null : i); } }}
 					>
 						{/* Dot */}
 						<div style={{

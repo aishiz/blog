@@ -183,7 +183,12 @@ export default function ProductEvolution() {
 							return (
 								<div
 									key={i}
+									role="button"
+									tabIndex={added || i === 0 ? -1 : 0}
+									aria-disabled={added || i === 0}
+									aria-label={`Добавить модуль: ${mod.name}`}
 									onClick={() => { if (!added && i !== 0) addModule(i); }}
+									onKeyDown={(e) => { if ((e.key === 'Enter' || e.key === ' ') && !added && i !== 0) { e.preventDefault(); addModule(i); } }}
 									style={{
 										width: mobile ? '44px' : '52px', height: mobile ? '44px' : '52px',
 										borderRadius: '50%',

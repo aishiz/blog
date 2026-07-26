@@ -256,7 +256,7 @@ export default function ThroughputCalculator() {
 			}}>
 				<div style={css.selectGroup}>
 					<span style={css.label}>Модель</span>
-					<select style={{ ...css.select, ...mobileSelect }} value={modelIdx} onChange={(e) => setModelIdx(Number(e.target.value))}>
+					<select aria-label="Модель" style={{ ...css.select, ...mobileSelect }} value={modelIdx} onChange={(e) => setModelIdx(Number(e.target.value))}>
 						{models.map((m, i) => (
 							<option key={i} value={i}>{m.name}</option>
 						))}
@@ -265,7 +265,7 @@ export default function ThroughputCalculator() {
 				<div style={{ display: 'flex', gap: '0.5rem' }}>
 					<div style={{ ...css.selectGroup, flex: 1, minWidth: 0 }}>
 						<span style={css.label}>GPU</span>
-						<select style={{ ...css.select, ...mobileSelect }} value={gpuIdx} onChange={(e) => setGpuIdx(Number(e.target.value))}>
+						<select aria-label="GPU" style={{ ...css.select, ...mobileSelect }} value={gpuIdx} onChange={(e) => setGpuIdx(Number(e.target.value))}>
 							{gpus.map((g, i) => (
 								<option key={i} value={i}>{g.name}</option>
 							))}
@@ -273,7 +273,7 @@ export default function ThroughputCalculator() {
 					</div>
 					<div style={{ ...css.selectGroup, ...(mobile ? { width: '80px', flexShrink: 0 } : { flex: 1, minWidth: 0 }) }}>
 						<span style={css.label}>{mobile ? 'GPU ×' : 'Кол-во GPU'}</span>
-						<select style={{ ...css.select, ...mobileSelect }} value={gpuCount} onChange={(e) => setGpuCount(Number(e.target.value))}>
+						<select aria-label="Количество GPU" style={{ ...css.select, ...mobileSelect }} value={gpuCount} onChange={(e) => setGpuCount(Number(e.target.value))}>
 							{[1, 2, 4, 8].map((n) => (
 								<option key={n} value={n}>{n}×</option>
 							))}
@@ -282,7 +282,7 @@ export default function ThroughputCalculator() {
 				</div>
 				<div style={css.selectGroup}>
 					<span style={css.label}>Квантизация</span>
-					<select style={{ ...css.select, ...mobileSelect }} value={quantIdx} onChange={(e) => setQuantIdx(Number(e.target.value))}>
+					<select aria-label="Квантизация" style={{ ...css.select, ...mobileSelect }} value={quantIdx} onChange={(e) => setQuantIdx(Number(e.target.value))}>
 						{quantOptions.map((q, i) => (
 							<option key={i} value={i}>{q.label}</option>
 						))}

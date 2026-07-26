@@ -89,7 +89,10 @@ export default function ThreatMap() {
 					return (
 						<div
 							key={i}
+							role="button"
+							tabIndex={0}
 							onClick={() => setActive(isActive ? null : i)}
+							onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(isActive ? null : i); } }}
 							style={{
 								padding: mobile ? '0.85rem' : '1.15rem',
 								borderRadius: '10px',

@@ -82,7 +82,7 @@ export default function OpticalCompressionViz() {
 			</div>
 
 			<div style={css.controls}>
-				<input type="range" min={200} max={2500} step={100} value={words} onChange={(e) => setWords(Number(e.target.value))} style={css.slider} />
+				<input aria-label="Количество слов" type="range" min={200} max={2500} step={100} value={words} onChange={(e) => setWords(Number(e.target.value))} style={css.slider} />
 				<span style={css.sliderVal}>{words.toLocaleString('ru-RU')} слов</span>
 			</div>
 		</div>
