@@ -32,6 +32,7 @@ const readingTime = `${Math.max(1, Math.round(words / 200))} мин чтения
 <BlogPost
 	{...post.data}
 	readingTime={readingTime}
+	wordCount={words}
 	prevPost={prevPost ? { title: prevPost.data.title, slug: prevPost.id } : undefined}
 	nextPost={nextPost ? { title: nextPost.data.title, slug: nextPost.id } : undefined}
 >

@@ -12,11 +12,12 @@ import { SITE_TITLE, AUTHOR_NAME } from '../consts';
 
 type Props = CollectionEntry<'blog'>['data'] & {
 	readingTime?: string;
+	wordCount?: number;
 	prevPost?: { title: string; slug: string };
 	nextPost?: { title: string; slug: string };
 };
 
-const { title, description, pubDate, updatedDate, heroImage, readingTime, prevPost, nextPost } = Astro.props;
+const { title, description, pubDate, updatedDate, heroImage, readingTime, wordCount, category, prevPost, nextPost } = Astro.props;
 
 const canonicalURL = new URL(Astro.url.pathname, Astro.site);
 const imageURL = heroImage ? new URL(heroImage.src, Astro.site).toString() : undefined;
@@ -30,6 +31,8 @@ const articleSchema = {
 	...(imageURL && { "image": imageURL }),
 	"datePublished": pubDate.toISOString(),
 	...(updatedDate && { "dateModified": updatedDate.toISOString() }),
+	...(category && { "articleSection": category }),
+	...(wordCount && { "wordCount": wordCount }),
 	"author": {
 		"@type": "Person",
 		"name": AUTHOR_NAME,
