@@ -24,6 +24,7 @@ function formatDate(d: Date) {
 
 const featured = allPosts[0];
 const rest = allPosts.slice(1);
+const recentRest = rest.slice(0, 4);
 
 // «База» — закреплённые фундаментальные статьи для входа в тему
 const STARTER_SLUGS = ['kv-cache', 'llm-quantization', 'moe-explained'];
@@ -142,12 +143,13 @@ const websiteSchema = {
 				</div>
 			</section>
 
-			<section class="recent-posts" aria-label="Все статьи">
+			<section class="recent-posts" aria-label="Ещё статьи">
 				<div class="section-header">
-					<h2>Все статьи</h2>
+					<h2>Ещё статьи</h2>
+					<a href="/blog" class="see-all">Смотреть все &rarr;</a>
 				</div>
 				<div class="posts-grid">
-					{rest.map((post) => (
+					{recentRest.map((post) => (
 						<BlogCard
 							title={post.data.title}
 							description={post.data.description}
