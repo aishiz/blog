@@ -5,7 +5,7 @@ import '../styles/global.css';
 import '@fontsource-variable/inter/wght.css';
 import '@fontsource-variable/jetbrains-mono/wght.css';
 import type { ImageMetadata } from 'astro';
-import { SITE_TITLE, SITE_DESCRIPTION, AUTHOR_NAME } from '../consts';
+import { SITE_TITLE, SITE_DESCRIPTION, AUTHOR_NAME, YANDEX_METRIKA_ID, YANDEX_VERIFICATION, GOOGLE_SITE_VERIFICATION } from '../consts';
 
 interface Props {
 	title: string;
@@ -60,6 +60,9 @@ const ogImageURL = image ? new URL(image.src, Astro.site) : new URL('/og-default
 {noindex && <meta name="robots" content="noindex, nofollow" />}
 <meta name="author" content={AUTHOR_NAME} />
 
+{YANDEX_VERIFICATION && <meta name="yandex-verification" content={YANDEX_VERIFICATION} />}
+{GOOGLE_SITE_VERIFICATION && <meta name="google-site-verification" content={GOOGLE_SITE_VERIFICATION} />}
+
 <link rel="canonical" href={canonicalURL} />
 
 <title>{title}</title>
@@ -80,5 +83,28 @@ const ogImageURL = image ? new URL(image.src, Astro.site) : new URL('/og-default
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={ogImageURL} />
+
+{YANDEX_METRIKA_ID && (
+	<Fragment>
+		<script is:inline define:vars={{ id: YANDEX_METRIKA_ID }}>
+			(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+			m[i].l=1*new Date();
+			for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+			k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})
+			(window, document, "script", "https://mc.yandex.ru/metrika/tag.js", "ym");
+
+			ym(id, "init", {
+				clickmap: true,
+				trackLinks: true,
+				accurateTrackBounce: true,
+			});
+		</script>
+		<noscript>
+			<div>
+				<img src={`https://mc.yandex.ru/watch/${YANDEX_METRIKA_ID}`} style="position:absolute; left:-9999px;" alt="" />
+			</div>
+		</noscript>
+	</Fragment>
+)}
 
 <slot />
