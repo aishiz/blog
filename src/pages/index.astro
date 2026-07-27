@@ -115,7 +115,7 @@ const websiteSchema = {
 							description={featured.data.description}
 							date={formatDate(featured.data.pubDate)}
 							slug={featured.id}
-							heroImage={featured.data.heroImage?.src}
+							heroImage={featured.data.heroImage}
 							readingTime={estimateReadingTime(featured.body ?? '')}
 							category={featured.data.category}
 							featured={true}
@@ -153,7 +153,7 @@ const websiteSchema = {
 							description={post.data.description}
 							date={formatDate(post.data.pubDate)}
 							slug={post.id}
-							heroImage={post.data.heroImage?.src}
+							heroImage={post.data.heroImage}
 							readingTime={estimateReadingTime(post.body ?? '')}
 							category={post.data.category}
 						/>

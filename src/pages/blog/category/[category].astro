@@ -97,7 +97,7 @@ const collectionSchema = {
 						description={post.data.description}
 						date={formatDate(post.data.pubDate)}
 						slug={post.id}
-						heroImage={post.data.heroImage?.src}
+						heroImage={post.data.heroImage}
 						readingTime={estimateReadingTime(post.body ?? '')}
 						category={post.data.category}
 					/>

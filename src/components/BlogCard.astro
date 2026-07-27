@@ -1,10 +1,13 @@
 ---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+
 interface Props {
 	title: string;
 	description: string;
 	date: string;
 	slug: string;
-	heroImage?: string;
+	heroImage?: ImageMetadata;
 	readingTime?: string;
 	featured?: boolean;
 	category?: string;
@@ -29,7 +32,15 @@ const phIndex = hash % 5;
 <a href={`/blog/${slug}/`} class:list={['card', { featured }]}>
 	<div class="card-image">
 		{heroImage ? (
-			<img src={heroImage} alt={title} loading={featured ? 'eager' : 'lazy'} fetchpriority={featured ? 'high' : 'auto'} />
+			<Image
+				src={heroImage}
+				alt={title}
+				width={featured ? 800 : 500}
+				height={featured ? 450 : 281}
+				densities={[1, 2]}
+				loading={featured ? 'eager' : 'lazy'}
+				fetchpriority={featured ? 'high' : 'auto'}
+			/>
 		) : (
 			<div class={`card-placeholder ph-${phIndex}`} aria-hidden="true">
 				<span class="ph-emoji">{emoji}</span>
