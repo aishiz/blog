@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
+    "postbuild": "npm run indexnow || echo '[indexnow] пинг не прошёл, сборку это не роняет'",
     "preview": "astro preview",
     "astro": "astro",
     "indexnow": "bash scripts/indexnow-submit.sh"
