@@ -85,7 +85,7 @@ const breadcrumbSchema = {
 
 	<body>
 		<Header />
-		<ReadingProgress client:load />
+		<ReadingProgress client:load wordCount={wordCount} />
 		<ScrollToTop />
 		<main>
 			<div class="article-top">
@@ -739,7 +739,7 @@ const breadcrumbSchema = {
 	}
 
 	.article-header h1 {
-		font-size: 2.35rem;
+		font-size: clamp(1.4rem, 1.1rem + 2vw, 2.35rem);
 		font-weight: 900;
 		line-height: 1.2;
 		margin-bottom: 0.75rem;
@@ -747,7 +747,7 @@ const breadcrumbSchema = {
 	}
 
 	.description {
-		font-size: 1.12rem;
+		font-size: clamp(0.92rem, 0.85rem + 0.35vw, 1.12rem);
 		color: var(--text-secondary);
 		line-height: 1.65;
 		margin: 0;
@@ -768,7 +768,7 @@ const breadcrumbSchema = {
 
 	/* ---- PROSE ---- */
 	.prose {
-		font-size: 1.1rem;
+		font-size: clamp(1rem, 0.95rem + 0.25vw, 1.1rem);
 		line-height: 1.9;
 		color: var(--text-secondary);
 		letter-spacing: 0.005em;
@@ -776,7 +776,7 @@ const breadcrumbSchema = {
 	}
 
 	.prose :global(h1) {
-		font-size: 1.85rem;
+		font-size: clamp(1.4rem, 1.2rem + 1vw, 1.85rem);
 		font-weight: 800;
 		margin: 2.75rem 0 1rem;
 		color: var(--text);
@@ -784,7 +784,7 @@ const breadcrumbSchema = {
 	}
 
 	.prose :global(h2) {
-		font-size: 1.55rem;
+		font-size: clamp(1.25rem, 1.1rem + 0.75vw, 1.55rem);
 		font-weight: 800;
 		margin: 2.75rem 0 0.85rem;
 		color: var(--text);
@@ -794,7 +794,7 @@ const breadcrumbSchema = {
 	}
 
 	.prose :global(h3) {
-		font-size: 1.25rem;
+		font-size: clamp(1.1rem, 1rem + 0.5vw, 1.25rem);
 		font-weight: 700;
 		margin: 2.25rem 0 0.7rem;
 		color: var(--text);
@@ -802,7 +802,7 @@ const breadcrumbSchema = {
 	}
 
 	.prose :global(h4) {
-		font-size: 1.1rem;
+		font-size: clamp(1rem, 0.95rem + 0.25vw, 1.1rem);
 		font-weight: 700;
 		margin: 1.75rem 0 0.5rem;
 		color: var(--text);
@@ -886,20 +886,17 @@ const breadcrumbSchema = {
 	}
 
 	@media (max-width: 768px) {
-		.prose { font-size: 1rem; line-height: 1.8; }
-		.prose :global(h1) { font-size: 1.5rem; margin: 2rem 0 0.75rem; }
-		.prose :global(h2) { font-size: 1.3rem; margin: 2rem 0 0.7rem; }
-		.prose :global(h3) { font-size: 1.1rem; margin: 1.75rem 0 0.6rem; }
+		.prose { line-height: 1.8; }
+		.prose :global(h1) { margin: 2rem 0 0.75rem; }
+		.prose :global(h2) { margin: 2rem 0 0.7rem; }
+		.prose :global(h3) { margin: 1.75rem 0 0.6rem; }
 		.prose :global(img) { margin: 1.25em 0; border-radius: 8px; }
 		.prose :global(blockquote) { padding: 0.75em 1em; font-size: 0.95rem; }
 		.prose :global(ul), .prose :global(ol) { padding-left: 1.35em; }
 	}
 
 	@media (max-width: 480px) {
-		.prose { font-size: 0.95rem; line-height: 1.75; }
-		.prose :global(h1) { font-size: 1.35rem; }
-		.prose :global(h2) { font-size: 1.2rem; }
-		.prose :global(h3) { font-size: 1.05rem; }
+		.prose { line-height: 1.75; }
 		.prose :global(p) { margin-bottom: 1.25em; }
 		.prose :global(img) {
 			margin: 1em -1rem;
@@ -1016,8 +1013,6 @@ const breadcrumbSchema = {
 
 	@media (max-width: 768px) {
 		main { padding: 0 1.25rem 3rem; }
-		.article-header h1 { font-size: 1.65rem; }
-		.description { font-size: 1rem; }
 		.post-nav { grid-template-columns: 1fr; }
 		.hero-image { border-radius: 12px; margin-bottom: 2rem; }
 		.article-toolbar { margin: 0.5rem 0 1.25rem; }
@@ -1029,14 +1024,8 @@ const breadcrumbSchema = {
 		.breadcrumbs ol { font-size: 0.72rem; }
 		.breadcrumbs li[aria-current="page"] { max-width: 180px; }
 		.article-header { margin-bottom: 1.5rem; }
-		.article-header h1 {
-			font-size: 1.4rem;
-			letter-spacing: -0.01em;
-		}
-		.description {
-			font-size: 0.92rem;
-			line-height: 1.55;
-		}
+		.article-header h1 { letter-spacing: -0.01em; }
+		.description { line-height: 1.55; }
 		.meta { font-size: 0.75rem; }
 		.hero-image {
 			margin-left: -1rem;
@@ -1055,6 +1044,10 @@ const breadcrumbSchema = {
 </style>
 
 <style is:global>
+	@media (max-width: 480px) {
+		.reading-remaining { display: none; }
+	}
+
 	.toc-nav {
 		display: flex;
 		flex-direction: column;
