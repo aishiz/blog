@@ -6,6 +6,7 @@ import Footer from '../../components/Footer.astro';
 import Header from '../../components/Header.astro';
 import ScrollToTop from '../../components/ScrollToTop.astro';
 import SearchBar from '../../components/SearchBar';
+import { CATEGORIES as CATEGORY_DEFS } from '../../data/categories';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../../consts';
 
 const posts = (await getCollection('blog')).sort(
@@ -29,12 +30,7 @@ const searchData = posts.map((post) => ({
 	date: formatDate(post.data.pubDate),
 }));
 
-const CATEGORIES = [
-	{ key: 'фундамент', varName: '--cat-fundament' },
-	{ key: 'тулы', varName: '--cat-tools' },
-	{ key: 'модели', varName: '--cat-models' },
-	{ key: 'хайп', varName: '--cat-hype' },
-].map((c) => ({ ...c, count: posts.filter((p) => p.data.category === c.key).length }));
+const CATEGORIES = CATEGORY_DEFS.map((c) => ({ ...c, count: posts.filter((p) => p.data.category === c.key).length }));
 
 const collectionSchema = {
 	"@context": "https://schema.org",
@@ -78,9 +74,9 @@ const collectionSchema = {
 				<div class="filter-row" role="group" aria-label="Фильтр по рубрикам">
 					<button class="filter-chip active" data-cat="">Все <span class="chip-count">{posts.length}</span></button>
 					{CATEGORIES.map((c) => (
-						<button class="filter-chip" data-cat={c.key} style={`--chip: var(${c.varName})`}>
+						<a class="filter-chip" href={`/blog/category/${c.slug}/`} data-cat={c.key} style={`--chip: var(${c.varName})`}>
 							{c.key} <span class="chip-count">{c.count}</span>
-						</button>
+						</a>
 					))}
 				</div>
 			</div>
@@ -103,10 +99,13 @@ const collectionSchema = {
 			</div>
 
 			<script>
-				const chips = document.querySelectorAll<HTMLButtonElement>('.filter-chip');
+				const chips = document.querySelectorAll<HTMLElement>('.filter-chip');
 				const wraps = document.querySelectorAll<HTMLElement>('.card-wrap');
 				chips.forEach((chip) => {
-					chip.addEventListener('click', () => {
+					chip.addEventListener('click', (e) => {
+						// ponytail: чипы — реальные ссылки на /blog/category/* для краулеров,
+						// но с JS фильтруем на месте вместо перехода — быстрее для пользователя.
+						e.preventDefault();
 						chips.forEach((c) => c.classList.remove('active'));
 						chip.classList.add('active');
 						const cat = chip.dataset.cat ?? '';

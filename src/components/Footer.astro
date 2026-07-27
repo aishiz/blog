@@ -1,4 +1,5 @@
 ---
+import { CATEGORIES } from '../data/categories';
 const today = new Date();
 ---
 
@@ -6,6 +7,9 @@ const today = new Date();
 	<div class="footer-inner">
 		<div class="footer-left">
 			<p class="copyright">&copy; {today.getFullYear()} ЭЙ АЙ ШИЗ</p>
+			<nav class="footer-categories" aria-label="Рубрики">
+				{CATEGORIES.map((c) => <a href={`/blog/category/${c.slug}/`}>{c.title}</a>)}
+			</nav>
 		</div>
 		<div class="footer-right">
 			<a href="https://t.me/ai_shizz" target="_blank" rel="noopener" class="footer-link" aria-label="Telegram канал">
@@ -33,6 +37,21 @@ const today = new Date();
 	.footer-left {
 		display: flex;
 		align-items: center;
+		gap: 1.25rem;
+	}
+
+	.footer-categories {
+		display: flex;
+		gap: 0.9rem;
+	}
+
+	.footer-categories a {
+		font-size: 0.8rem;
+		color: var(--text-muted);
+	}
+
+	.footer-categories a:hover {
+		color: var(--accent-light);
 	}
 
 	.footer-right {
@@ -74,6 +93,16 @@ const today = new Date();
 
 		.footer-right {
 			gap: 0.5rem;
+		}
+
+		.footer-left {
+			flex-direction: column;
+			gap: 0.6rem;
+		}
+
+		.footer-categories {
+			flex-wrap: wrap;
+			justify-content: center;
 		}
 	}
 </style>
