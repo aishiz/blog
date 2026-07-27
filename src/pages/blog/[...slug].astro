@@ -12,6 +12,9 @@ export async function getStaticPaths() {
 			post,
 			prevPost: posts[i + 1] ?? null,
 			nextPost: posts[i - 1] ?? null,
+			relatedPosts: post.data.category
+				? posts.filter((p) => p.id !== post.id && p.data.category === post.data.category).slice(0, 2)
+				: [],
 		},
 	}));
 }
@@ -20,9 +23,10 @@ interface Props {
 	post: CollectionEntry<'blog'>;
 	prevPost: CollectionEntry<'blog'> | null;
 	nextPost: CollectionEntry<'blog'> | null;
+	relatedPosts: CollectionEntry<'blog'>[];
 }
 
-const { post, prevPost, nextPost } = Astro.props;
+const { post, prevPost, nextPost, relatedPosts } = Astro.props;
 const { Content } = await render(post);
 
 const words = (post.body ?? '').trim().split(/\s+/).length;
@@ -35,6 +39,14 @@ const readingTime = `${Math.max(1, Math.round(words / 200))} мин чтения
 	wordCount={words}
 	prevPost={prevPost ? { title: prevPost.data.title, slug: prevPost.id } : undefined}
 	nextPost={nextPost ? { title: nextPost.data.title, slug: nextPost.id } : undefined}
+	relatedPosts={relatedPosts.map((p) => ({
+		title: p.data.title,
+		description: p.data.description,
+		slug: p.id,
+		heroImage: p.data.heroImage,
+		category: p.data.category,
+		pubDate: p.data.pubDate,
+	}))}
 >
 	<Content />
 </BlogPost>

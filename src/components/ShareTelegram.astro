@@ -1,0 +1,39 @@
+---
+interface Props {
+	url: string;
+	text: string;
+}
+
+const { url, text } = Astro.props;
+const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+---
+
+<a href={shareUrl} target="_blank" rel="noopener noreferrer" class="share-tg">
+	<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+		<line x1="22" y1="2" x2="11" y2="13" />
+		<polygon points="22 2 15 22 11 13 2 9 22 2" />
+	</svg>
+	Telegram
+</a>
+
+<style>
+	.share-tg {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		padding: 0.4rem 0.85rem;
+		font-size: 0.82rem;
+		font-weight: 500;
+		color: var(--text-muted);
+		background: var(--bg-card);
+		border: 1px solid var(--border);
+		border-radius: 100px;
+		text-decoration: none;
+		transition: all 0.2s ease;
+	}
+
+	.share-tg:hover {
+		color: #2aabee;
+		border-color: rgba(42, 171, 238, 0.4);
+	}
+</style>

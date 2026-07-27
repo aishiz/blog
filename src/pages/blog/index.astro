@@ -82,20 +82,24 @@ const collectionSchema = {
 			</div>
 
 			<div class="posts-grid">
-				{posts.map((post, i) => (
-					<div class:list={['card-wrap', { 'wrap-featured': i === 0 }]} data-category={post.data.category ?? ''}>
-						<BlogCard
-							title={post.data.title}
-							description={post.data.description}
-							date={formatDate(post.data.pubDate)}
-							slug={post.id}
-							heroImage={post.data.heroImage}
-							readingTime={estimateReadingTime(post.body ?? '')}
-							category={post.data.category}
-							featured={i === 0}
-						/>
-					</div>
-				))}
+				{posts.map((post, i) => {
+					const wide = i > 0 && i % 5 === 0;
+					return (
+						<div class:list={['card-wrap', { 'wrap-featured': i === 0 || wide }]} data-category={post.data.category ?? ''}>
+							<BlogCard
+								title={post.data.title}
+								description={post.data.description}
+								date={formatDate(post.data.pubDate)}
+								slug={post.id}
+								heroImage={post.data.heroImage}
+								readingTime={estimateReadingTime(post.body ?? '')}
+								category={post.data.category}
+								featured={i === 0}
+								wide={wide}
+							/>
+						</div>
+					);
+				})}
 			</div>
 
 			<script>

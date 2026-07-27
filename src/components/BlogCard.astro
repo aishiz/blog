@@ -10,10 +10,12 @@ interface Props {
 	heroImage?: ImageMetadata;
 	readingTime?: string;
 	featured?: boolean;
+	wide?: boolean;
 	category?: string;
 }
 
-const { title, description, date, slug, heroImage, readingTime, featured = false, category } = Astro.props;
+const { title, description, date, slug, heroImage, readingTime, featured = false, wide = false, category } = Astro.props;
+const horizontal = featured || wide;
 
 const CAT_VARS: Record<string, string> = {
 	'фундамент': '--cat-fundament',
@@ -29,14 +31,14 @@ const hash = [...slug].reduce((a, c) => a + c.charCodeAt(0), 0);
 const phIndex = hash % 5;
 ---
 
-<a href={`/blog/${slug}/`} class:list={['card', { featured }]}>
+<a href={`/blog/${slug}/`} class:list={['card', { featured: horizontal }]}>
 	<div class="card-image">
 		{heroImage ? (
 			<Image
 				src={heroImage}
 				alt={title}
-				width={featured ? 800 : 500}
-				height={featured ? 450 : 281}
+				width={horizontal ? 800 : 500}
+				height={horizontal ? 450 : 281}
 				densities={[1, 2]}
 				loading={featured ? 'eager' : 'lazy'}
 				fetchpriority={featured ? 'high' : 'auto'}
