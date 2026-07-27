@@ -95,6 +95,8 @@ const breadcrumbSchema = {
 
 				<header class="article-header">
 					<div class="meta">
+						<a href="/about" class="author-link">{AUTHOR_NAME}</a>
+						<span class="meta-sep">&middot;</span>
 						<FormattedDate date={pubDate} />
 						{updatedDate && (
 							<span class="updated">&middot; обновлено <FormattedDate date={updatedDate} /></span>
@@ -669,6 +671,19 @@ const breadcrumbSchema = {
 		color: var(--accent-light);
 		margin-bottom: 0.75rem;
 		font-weight: 500;
+	}
+
+	.author-link {
+		color: var(--text);
+		font-weight: 600;
+	}
+
+	.author-link:hover {
+		color: var(--accent-light);
+	}
+
+	.meta-sep {
+		color: var(--text-muted);
 	}
 
 	.updated {
