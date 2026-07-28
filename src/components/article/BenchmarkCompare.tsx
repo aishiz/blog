@@ -140,7 +140,7 @@ export default function BenchmarkCompare() {
 			</div>
 
 			<div style={css.citation}>
-				Квадратичный рост выше — точный расчёт по формуле (2 матрицы × N² × 2 байта), не бенчмарк. А по данным авторов FlashAttention: на GPT-2 (seq len 1K) — ускорение end-to-end обучения и заметно больший доступный контекст при том же бюджете VRAM (источник: <a href="https://github.com/Dao-AILab/flash-attention" target="_blank" rel="noopener">Dao-AILab/flash-attention</a>).
+				Квадратичный рост выше — точный расчёт по формуле (2 матрицы × N² × 2 байта), не бенчмарк. А по данным авторов FlashAttention: 3× ускорение end-to-end обучения на GPT-2 (seq len 1K) и до 20× экономии памяти на длинных последовательностях при том же бюджете VRAM (источник: <a href="https://github.com/Dao-AILab/flash-attention" target="_blank" rel="noopener">Dao-AILab/flash-attention</a>).
 			</div>
 		</div>
 	);
