@@ -55,7 +55,7 @@ const steps: Record<number, Step> = {
 
 const results: Record<string, Result> = {
 	claude_code: { name: 'Claude Code', color: '#ff6b2b', why: 'Официальный инструмент Anthropic — вложенные суб-агенты, маркетплейс тулов, включён в подписки Pro/Max/Team.' },
-	codex: { name: 'Codex', color: '#10a37f', why: '#2 на Terminal-Bench 2.1 (83.1%) — если важнее всего сырой бенчмарк-скор, это он.' },
+	codex: { name: 'Codex', color: '#10a37f', why: 'Лидер тройки на Terminal-Bench 2.1 (83.1%) — если важнее всего сырой бенчмарк-скор, это он.' },
 	opencode: { name: 'OpenCode', color: '#3b82f6', why: 'Provider-agnostic, 75+ провайдеров — не привязан к одному вендору, режимы build/plan.' },
 	hermes_coding: { name: 'Hermes Agent', color: '#8b5cf6', why: '~78 скиллов (TDD, debugging, review), персистентная память, умеет делегировать в Claude Code/Codex.' },
 	aider: { name: 'Aider', color: '#f59e0b', why: 'git-native с самого начала, простой и предсказуемый — один из старейших в жанре не просто так.' },
