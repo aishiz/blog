@@ -18,12 +18,12 @@ const categoryLabels: Record<Category, string> = { cli: 'CLI', ide: 'IDE', cloud
 
 const agents: Agent[] = [
 	{ name: 'Claude Code', category: 'cli', maker: 'Anthropic', model: 'Claude Sonnet 5 (по умолчанию)', license: 'проприетарный', stars: '—', price: 'включён в Pro/Max/Team + API', diff: 'вложенные суб-агенты (3 уровня), маркетплейс тулов, Auto Mode (preview)', color: '#ff6b2b' },
-	{ name: 'Codex', category: 'cli', maker: 'OpenAI', model: 'GPT-5.5', license: 'Apache-2.0', stars: '102 019', price: 'ChatGPT Plus $20 / Pro 5x $100 / Pro 20x $200 или API', diff: '#2 на Terminal-Bench 2.1 (83.1%), sandboxed execution + approval workflow', color: '#10a37f' },
+	{ name: 'Codex', category: 'cli', maker: 'OpenAI', model: 'GPT-5.5', license: 'Apache-2.0', stars: '102 019', price: 'ChatGPT Plus $20 / Pro 5x $100 / Pro 20x $200 или API', diff: 'лидер тройки на Terminal-Bench 2.1 (83.1%), sandboxed execution + approval workflow', color: '#10a37f' },
 	{ name: 'OpenCode', category: 'cli', maker: 'Anomaly (anomalyco/opencode)', model: 'любая (75+ провайдеров)', license: 'MIT', stars: '190 380', price: 'бесплатный, платишь за свой API', diff: 'provider-agnostic, режимы build/plan', color: '#3b82f6' },
 	{ name: 'Hermes Agent', category: 'cli', maker: 'Nous Research', model: 'любая (Nous Portal/OpenRouter/OpenAI)', license: 'MIT', stars: '221 624', price: 'бесплатный, self-hosted', diff: '~78 скиллов (TDD/debugging/review), умеет делегировать в Claude Code/Codex — и это тот же продукт, что в разделе про ассистентов', color: '#8b5cf6' },
 	{ name: 'Cursor', category: 'ide', maker: 'Anysphere', model: 'на выбор', license: 'проприетарный', stars: '—', price: 'Hobby бесплатно / Pro $20 / Teams $40', diff: 'агент прямо в IDE, не нужно переключаться в терминал', color: '#00d1b2' },
 	{ name: 'Aider', category: 'cli', maker: 'Aider-AI', model: 'любая (свой API-ключ)', license: 'Apache-2.0', stars: '47 750', price: 'бесплатный, платишь за свой API', diff: 'git-native с самого начала, один из старейших в жанре', color: '#f59e0b' },
-	{ name: 'Devin', category: 'cloud', maker: 'Cognition', model: 'своя', license: 'проприетарный', stars: '—', price: 'подписка (девин.ai)', diff: 'полностью автономный облачный агент, Windsurf в 2026 поглощён как Devin Desktop', color: '#ec4899' },
+	{ name: 'Devin', category: 'cloud', maker: 'Cognition', model: 'своя', license: 'проприетарный', stars: '—', price: 'подписка (devin.ai)', diff: 'полностью автономный облачный агент, Windsurf в 2026 поглощён как Devin Desktop', color: '#ec4899' },
 	{ name: 'Gemini CLI', category: 'cli', maker: 'Google', model: 'Gemini 3.1 Pro', license: 'Apache-2.0', stars: '—', price: 'бесплатный тир закрыт 18 июня 2026, сейчас Antigravity CLI (free + Pro $20)', diff: '65.8% на Terminal-Bench 2.1', color: '#4285f4' },
 ];
 
