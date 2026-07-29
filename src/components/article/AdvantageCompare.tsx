@@ -8,7 +8,7 @@ type Mode = 'ppo' | 'grpo';
 const REWARDS = [1, 0, 1, 1, 0, 1, 0, 1];
 const GROUP_MEAN = 0.625;
 const GROUP_STD = 0.4841;
-const GRPO_ADVANTAGES = [0.7744, -1.2907, 0.7744, 0.7744, -1.2907, 0.7744, -1.2907, 0.7744];
+const GRPO_ADVANTAGES = [0.7746, -1.291, 0.7746, 0.7746, -1.291, 0.7746, -1.291, 0.7746];
 
 // PPO-сравнение на тех же rollout'ах: одна скалярная награда в конце генерации,
 // advantage = reward − V(s). V(s)=0.55 — иллюстративная critic-оценка (обучаемая сеть,
