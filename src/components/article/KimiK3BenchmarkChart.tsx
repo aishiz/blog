@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 const BENCHMARKS = [
 	{ name: 'GPT-5.6 Sol', score: 96.20, color: '#10a37f', note: 'OpenAI, флагман линейки — выше всех в этом сравнении' },
 	{ name: 'Claude Fable 5', score: 95.00, color: '#ff6b2b', note: 'Самая мощная модель Anthropic на момент выхода K3' },
-	{ name: 'Kimi K3', score: 93.40, color: '#c946ff', note: 'Open-weight модель, 2.8T параметров — в 2.6 пунктах от Fable 5, закрытой модели' },
+	{ name: 'Kimi K3', score: 93.40, color: '#c946ff', note: 'Open-weight модель, 2.8T параметров — в 1.6 пунктах от Fable 5, закрытой модели' },
 	{ name: 'Claude Opus 4.8', score: 88.60, color: '#f59e0b', note: 'Предыдущий топ Anthropic — K3 уже обгоняет его' },
 ];
 
