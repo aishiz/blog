@@ -1,0 +1,145 @@
+---
+title: 'Пост-тренинг LLM: RLHF → DPO → GRPO 🎯🧮'
+description: 'Как LLM учат вести себя хорошо после претрейна — эволюция четырёх алгоритмов за три года: PPO с критик-сетью (InstructGPT, 2022), DPO без RL-петли (2023), GRPO без критика (DeepSeekMath, 2024) и DAPO, который чинит баги ванильного GRPO (2025). Формулы из первоисточников, NumPy-проверенный численный пример.'
+pubDate: 'Jul 29 2026'
+category: 'фундамент'
+---
+
+import Callout from '../../components/article/Callout.astro';
+import StepList from '../../components/article/StepList.astro';
+import QuantCard from '../../components/article/QuantCard.astro';
+import Mermaid from '../../components/article/Mermaid';
+import AdvantageCompare from '../../components/article/AdvantageCompare';
+import CriticVramCalculator from '../../components/article/CriticVramCalculator';
+import PostTrainingTimeline from '../../components/article/PostTrainingTimeline';
+import GroupRolloutSimulator from '../../components/article/GroupRolloutSimulator';
+import KlPenaltySlider from '../../components/article/KlPenaltySlider';
+import AlgorithmPickerQuiz from '../../components/article/AlgorithmPickerQuiz';
+import ScaleRankingFlip from '../../components/article/ScaleRankingFlip';
+
+Ну чё, малютки, вот словосочетание, которое встречается в каждой второй статье этого блога про конкретную модель: «RL post-training». У [Kimi K3](/blog/kimi-k3/) — MuonClip и агентский RL. У DeepSeek-R1 — GRPO. Каждый раз мимоходом, каждый раз без объяснения, что там вообще происходит внутри. Пора закрыть эту дыру: как LLM вообще учат «вести себя хорошо» после претрейна, и почему индустрия за три года дошла от PPO с отдельной critic-сетью до GRPO, которому критик вообще не нужен.
+
+<Callout type="fire" title="Суть за 10 секунд">
+Пост-тренинг LLM — не одна методика, а эволюция четырёх. **PPO** (2022, InstructGPT) — классический RL с отдельной critic-сетью, которая оценивает, насколько хорош текущий ответ. **DPO** (2023) обходит RL-петлю вообще: обычный supervised loss на паре «хороший/плохой» ответ. **GRPO** (2024, DeepSeekMath) возвращает RL, но убирает критика — baseline считается статистикой по группе из G rollout'ов на один промпт. **DAPO** (2025, ByteDance) чинит конкретные баги ванильного GRPO: entropy collapse и промпты с нулевым градиентом.
+</Callout>
+
+<PostTrainingTimeline client:visible />
+
+<Mermaid client:visible chart={`flowchart LR
+    SFT[SFT] --> RM[Reward Model]
+    RM --> PPO["PPO\ncritic + reward model"]
+    SFT --> DPO["DPO\nпрямо на парах предпочтений"]
+    SFT --> GRPO["GRPO\ngroup rollouts, без критика"]
+    GRPO --> DAPO["DAPO\nClip-Higher + Dynamic Sampling"]`} caption="Структурная карта: от одного SFT-чекпоинта — три разных пути к пост-тренингу." />
+
+---
+
+## Часть 1: RLHF по классике — PPO и его критик
+
+Классический RLHF-рецепт зафиксировал InstructGPT (Ouyang et al., arXiv:2203.02155): SFT → обучаем отдельную reward-модель на человеческих предпочтениях → гоняем PPO, максимизируя эту награду с KL-штрафом против reference-модели, чтобы политика не улетала слишком далеко от того, с чего начала.
+
+Сердце PPO — клипованный surrogate-объектив (Schulman et al., arXiv:1707.06347):
+
+```
+L^CLIP(θ) = E_t[ min( r_t(θ)·Â_t, clip(r_t(θ), 1−ε, 1+ε)·Â_t ) ]
+r_t(θ) = π_θ(a_t|s_t) / π_θ_old(a_t|s_t),  ε = 0.2
+```
+
+Клип не даёт одному шагу обновления политики уйти слишком далеко от старой версии — обрезает как чрезмерный рост вероятности удачного действия, так и чрезмерное падение вероятности неудачного. Но вся эта конструкция держится на advantage-оценке Â_t, а её без критика не посчитать: GAE (generalized advantage estimation) берёт TD-остаток `δ_t = r_t + γV(s_{t+1}) − V(s_t)` и сглаживает по нескольким шагам. V(s) — это отдельная **обучаемая критик-сеть**, которая должна предсказывать, «насколько хорошим в среднем окажется состояние», чтобы дать честный baseline для сравнения.
+
+Проблема практическая, не концептуальная: критик — это ещё одна модель, обычно сопоставимого размера с самой policy-моделью, которая тренируется параллельно и должна постоянно жить в VRAM.
+
+<CriticVramCalculator client:visible />
+
+---
+
+## Часть 2: DPO — а зачем нам вообще RL
+
+DPO (Rafailov et al., arXiv:2305.18290) заходит с неожиданной стороны: что если вообще не тренировать отдельную reward-модель и не гонять RL-петлю, а свести задачу к обычному supervised loss?
+
+```
+L_DPO(π_θ; π_ref) = −E_(x,y_w,y_l)~D[ log σ( β·log(π_θ(y_w|x)/π_ref(y_w|x)) − β·log(π_θ(y_l|x)/π_ref(y_l|x)) ) ]
+```
+
+Фокус в переопределении: если подставить `r(x,y) = β·log(π_θ(y|x)/π_ref(y|x)) + β·log Z(x)` в модель предпочтений Брэдли-Терри, нормировочная константа Z(x) сокращается в паре, и получается loss, который вообще не требует явной reward-модели — сама политика неявно **и есть** награда. На датасете из пар «выбранный/отвергнутый» ответ (y_w/y_l) это обучение прямое: никакой генерации во время тренировки, никакого критика, никакой RL-петли.
+
+Что теряется: DPO работает строго на офлайн-данных — какие пары ответов были собраны, такие и обучают. Никакого online-исследования, никакой генерации новых кандидатов во время обучения. Здесь стоит честная оговорка: сам пейпер DPO заявляет только качественно, что метод «стабилен, производителен и вычислительно лёгок» — точных цифр экономии compute/памяти относительно полного RLHF в пейпере нет, несмотря на то, что это заявление часто пересказывают как количественное.
+
+---
+
+## Часть 3: GRPO — RL возвращается, критик — нет
+
+GRPO — детище DeepSeekMath (arXiv:2402.03300), а не DeepSeek-R1 (это частая путаница): именно здесь механизм описан впервые. Идея: вместо того чтобы тренировать критика, который предсказывает baseline для одного rollout'а, сэмплируем сразу **G rollout'ов на один и тот же промпт** и берём статистику самой группы как baseline.
+
+```
+J_GRPO(θ) = E[ (1/G)·Σ_i (1/|o_i|)·Σ_t{ min[ρ_i,t·Â_i,t, clip(ρ_i,t, 1−ε, 1+ε)·Â_i,t] − β·D_KL[π_θ‖π_ref] } ]
+Â_i = (r_i − mean(r_1..G)) / std(r_1..G)
+```
+
+ρ_i,t — тот же ratio, что и r_t(θ) в PPO. Разница — в advantage: никакой отдельной сети, только z-score награды внутри своей группы. DeepSeekMath использует G=64 и KL-коэффициент β=0.04.
+
+<AdvantageCompare client:visible />
+
+<GroupRolloutSimulator client:visible />
+
+DeepSeek-R1 (arXiv:2501.12948) взял ровно этот механизм и прогнал его на масштабе продакшена: AIME 2024 pass@1 у DeepSeek-R1-Zero вырос с **15.6% до 71.0%** за RL-тренировку одним GRPO, без единого шага SFT перед этим.
+
+Смежный кейс из того же семейства идей — как эволюционирует не только RL-алгоритм, но и сам оптимизатор вокруг него. В Kimi K2 использовался **MuonClip**: Muon плюс QK-Clip против взрыва attention-логитов. В [Kimi K3](/blog/kimi-k3/) он превращается в **Per-Head Muon** — тот же принцип, применённый к каждой attention-голове по отдельности (по независимым разборам архитектуры, официально Moonshot это отдельно не расписывает). RL-петля и оптимизатор, который её тренирует, эволюционируют параллельно, не только сам loss.
+
+<KlPenaltySlider client:visible />
+
+---
+
+## Часть 4: DAPO — что было не так в ванильном GRPO
+
+ByteDance (arXiv:2503.14476) нашёл в GRPO два конкретных структурных бага. Первый — **entropy collapse**: энтропия политики быстро падает, сэмплированные ответы одной группы становятся почти идентичными друг другу. Второй — **промпты с нулевым градиентом**: если все G ответов на промпт получили одинаковую награду (например, все правильные), то `std(r_1..G) = 0`, advantage для всей группы равен нулю, и градиент для этого промпта попросту исчезает — впустую потраченный compute.
+
+Фикс называется DAPO — Decoupled Clip and Dynamic Sampling Policy Optimization, но конкретная техника расширения клипа в пейпере называется **Clip-Higher**, а не «decoupled clip» (это словосочетание — только часть названия акронима): раздельные нижняя и верхняя границы клипа, ε_low=0.2 и ε_high=0.28, вместо одной симметричной ε. **Dynamic Sampling** — второй фикс, честно названный именно так: пересэмплирует и отфильтровывает промпты, где все ответы получили одинаковую награду (`0 < |верных ответов| < G`), поддерживая эффективный размер батча вместо того, чтобы впустую тратить compute на нулевой градиент.
+
+Пейпер добавляет ещё две техники (Token-Level Policy Gradient Loss, Overlong Reward Shaping) — за скобками этой статьи, но вот полная траектория ablation на AIME 2024 (Qwen2.5-32B):
+
+<QuantCard title="30 → 50" badge="AIME 2024, ablation DAPO" badgeColor="#f59e0b">
+Ванильный GRPO — 30. + Overlong Filtering — 36. + Clip-Higher — 38. + Soft Overlong Punishment — 41. + Token-level Loss — 42. + Dynamic Sampling (полный DAPO) — **50**. Итог обгоняет DeepSeek-R1-Zero-Qwen-32B (47) при **половине** шагов тренировки.
+</QuantCard>
+
+---
+
+## Часть 5: Споры
+
+Два свежих пейпера 2026 года ставят под вопрос удобные обобщения из частей выше.
+
+**Рейтинг алгоритмов зависит от масштаба.** «Do Post-Training Algorithms Actually Differ?» (arXiv:2603.19335, Xiaoyi Li) прогнал ~240 обучающих ранов на 4 масштабах модели (0.5B–7B) и 8 алгоритмах. Находка: на 1.5B лидирует online RL (в терминологии пейпера — SGRPO), на 7B резко вырывается вперёд SimPO (вариант из DPO-семейства) — с 38.7% на 1.5B до 85.8% на 7B на GSM8K. Разложение дисперсии результата: масштаб модели объясняет ≈50 процентных пунктов разброса, тип тренировки (online vs offline) — ≈9–10 п.п., а конкретный вариант лосс-функции — только ≈1 п.п. Это одноавторская, очень свежая работа — не устоявшийся консенсус, а конкретное недавнее исследование, которое стоит воспринимать как есть, а не как окончательный вердикт.
+
+<ScaleRankingFlip client:visible />
+
+**GRPO — не DPO, но «структурно родственен».** «It Takes Two: Your GRPO Is Secretly DPO» (arXiv:2510.00977, актуальная версия — май 2026) заявляет не математическую эквивалентность, а то, что эффективность GRPO объясняется его неявным контрастивным объективом — тем же механизмом снижения дисперсии через control variate, что используют DPO-подобные методы. Практическое следствие — **2-GRPO**: минимальный вариант с группой всего из 2 rollout'ов вместо 16, который сохраняет **97.6%** качества полного 16-GRPO, потратив только **12.5%** rollout'ов и **21%** времени тренировки. «Структурно родственен» — точная формулировка; «эквивалентен» была бы преувеличением того, что на самом деле утверждает пейпер.
+
+<AlgorithmPickerQuiz client:visible />
+
+---
+
+## TL;DR
+
+<StepList steps={[
+	{ num: "1", text: "<strong>PPO</strong> (InstructGPT, arXiv:2203.02155): SFT → reward model → RL с отдельной critic-сетью для advantage (GAE), клип ε=0.2" },
+	{ num: "2", text: "<strong>DPO</strong> (arXiv:2305.18290): reward становится implicit через Bradley-Terry — ни отдельной reward-модели, ни RL-петли, ни критика. Пейпер не даёт количественной оценки экономии compute" },
+	{ num: "3", text: "<strong>GRPO</strong> (DeepSeekMath, arXiv:2402.03300): advantage = z-score награды внутри группы из G=64 rollout'ов, без критика вообще, β=0.04. DeepSeek-R1 поднял AIME 2024 pass@1 с 15.6% до 71.0% этим механизмом" },
+	{ num: "4", text: "<strong>DAPO</strong> (ByteDance, arXiv:2503.14476): чинит entropy collapse и нулевой градиент в GRPO через Clip-Higher (ε_low=0.2/ε_high=0.28) и Dynamic Sampling — 50 против 47 у R1-Zero-Qwen-32B, за половину шагов" },
+	{ num: "5", text: "<strong>Споры:</strong> рейтинг алгоритмов переворачивается с масштабом модели (arXiv:2603.19335); GRPO структурно родственен DPO через control variate, но не буквально эквивалентен (arXiv:2510.00977)" },
+]} />
+
+Четыре алгоритма — не смена мод, а последовательная охота за одним и тем же: как получить честный сигнал для градиента дешевле и стабильнее, чем в прошлый раз. PPO решил задачу ценой критика. DPO выкинул RL-петлю целиком. GRPO вернул RL, но выкинул критика. DAPO залатал то, что GRPO сломал по пути. Следующий шаг, скорее всего, уже пишется как пейпер прямо сейчас. 🫡
+
+---
+
+### Источники
+
+1. [Proximal Policy Optimization Algorithms — Schulman et al. (arXiv:1707.06347)](https://arxiv.org/abs/1707.06347)
+2. [Training language models to follow instructions with human feedback — Ouyang et al. (arXiv:2203.02155)](https://arxiv.org/abs/2203.02155)
+3. [Direct Preference Optimization — Rafailov et al. (arXiv:2305.18290)](https://arxiv.org/abs/2305.18290)
+4. [DeepSeekMath: Pushing the Limits of Mathematical Reasoning in Open Language Models (arXiv:2402.03300)](https://arxiv.org/abs/2402.03300)
+5. [DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning (arXiv:2501.12948)](https://arxiv.org/abs/2501.12948)
+6. [DAPO: An Open-Source LLM Reinforcement Learning System at Scale (arXiv:2503.14476)](https://arxiv.org/abs/2503.14476)
+7. [Do Post-Training Algorithms Actually Differ? A Controlled Study Across Model Scales Uncovers Scale-Dependent Ranking Inversions (arXiv:2603.19335)](https://arxiv.org/abs/2603.19335)
+8. [It Takes Two: Your GRPO Is Secretly DPO (arXiv:2510.00977)](https://arxiv.org/abs/2510.00977)
+9. [Kimi K3: open-weight модель обгоняет Claude Opus 4.8](/blog/kimi-k3/)
