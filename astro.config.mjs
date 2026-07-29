@@ -5,6 +5,8 @@ import sitemap from '@astrojs/sitemap';
 import { defineConfig } from 'astro/config';
 import fs from 'node:fs';
 import path from 'node:path';
+import rehypeKatex from 'rehype-katex';
+import remarkMath from 'remark-math';
 
 import react from '@astrojs/react';
 
@@ -50,5 +52,7 @@ export default defineConfig({
                 dark: 'github-dark-default',
             },
         },
+        remarkPlugins: [remarkMath],
+        rehypePlugins: [rehypeKatex],
     },
 });
