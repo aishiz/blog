@@ -42,7 +42,7 @@ type Mode = 'ppo' | 'grpo';
 const REWARDS = [1, 0, 1, 1, 0, 1, 0, 1];
 const GROUP_MEAN = 0.625;
 const GROUP_STD = 0.4841;
-const GRPO_ADVANTAGES = [0.7744, -1.2907, 0.7744, 0.7744, -1.2907, 0.7744, -1.2907, 0.7744];
+const GRPO_ADVANTAGES = [0.7746, -1.291, 0.7746, 0.7746, -1.291, 0.7746, -1.291, 0.7746];
 
 // PPO-сравнение на тех же rollout'ах: одна скалярная награда в конце генерации,
 // advantage = reward − V(s). V(s)=0.55 — иллюстративная critic-оценка (обучаемая сеть,
@@ -1120,6 +1120,7 @@ category: 'фундамент'
 
 import Callout from '../../components/article/Callout.astro';
 import StepList from '../../components/article/StepList.astro';
+import QuantCard from '../../components/article/QuantCard.astro';
 import Mermaid from '../../components/article/Mermaid';
 import AdvantageCompare from '../../components/article/AdvantageCompare';
 import CriticVramCalculator from '../../components/article/CriticVramCalculator';
@@ -1139,10 +1140,10 @@ import ScaleRankingFlip from '../../components/article/ScaleRankingFlip';
 
 <Mermaid client:visible chart={`flowchart LR
     SFT[SFT] --> RM[Reward Model]
-    RM --> PPO["PPO\ncritic + reward model"]
-    SFT --> DPO["DPO\nпрямо на парах предпочтений"]
-    SFT --> GRPO["GRPO\ngroup rollouts, без критика"]
-    GRPO --> DAPO["DAPO\nClip-Higher + Dynamic Sampling"]`} caption="Структурная карта: от одного SFT-чекпоинта — три разных пути к пост-тренингу." />
+    RM --> PPO["PPO<br/>critic + reward model"]
+    SFT --> DPO["DPO<br/>прямо на парах предпочтений"]
+    SFT --> GRPO["GRPO<br/>group rollouts, без критика"]
+    GRPO --> DAPO["DAPO<br/>Clip-Higher + Dynamic Sampling"]`} caption="Структурная карта: от одного SFT-чекпоинта — три разных пути к пост-тренингу." />
 
 ---
 
@@ -1157,7 +1158,7 @@ L^CLIP(θ) = E_t[ min( r_t(θ)·Â_t, clip(r_t(θ), 1−ε, 1+ε)·Â_t ) ]
 r_t(θ) = π_θ(a_t|s_t) / π_θ_old(a_t|s_t),  ε = 0.2
 ```
 
-Клип не даёт одному шагу обновления политики уйти слишком далеко от старой версии — обрезает как чрезмерный рост вероятности удачного действия, так и чрезмерное падение вероятности неудачного. Но вся эта конструкция держится на advantage-оценке Â_t, а её без критика не посчитать: GAE (generalized advantage estimation) берёт TD-остаток δ_t = r_t + γV(s_{t+1}) − V(s_t) и сглаживает по нескольким шагам. V(s) — это отдельная **обучаемая критик-сеть**, которая должна предсказывать, «насколько хорошим в среднем окажется состояние», чтобы дать честный baseline для сравнения.
+Клип не даёт одному шагу обновления политики уйти слишком далеко от старой версии — обрезает как чрезмерный рост вероятности удачного действия, так и чрезмерное падение вероятности неудачного. Но вся эта конструкция держится на advantage-оценке Â_t, а её без критика не посчитать: GAE (generalized advantage estimation) берёт TD-остаток `δ_t = r_t + γV(s_{t+1}) − V(s_t)` и сглаживает по нескольким шагам. V(s) — это отдельная **обучаемая критик-сеть**, которая должна предсказывать, «насколько хорошим в среднем окажется состояние», чтобы дать честный baseline для сравнения.
 
 Проблема практическая, не концептуальная: критик — это ещё одна модель, обычно сопоставимого размера с самой policy-моделью, которая тренируется параллельно и должна постоянно жить в VRAM.
 
