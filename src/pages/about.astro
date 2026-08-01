@@ -927,6 +927,17 @@ const breadcrumbSchema = {
 		opacity: 0.7;
 	}
 
+	/* Светлая тема: на белом фоне карточка почти сливалась — усиливаем тинт,
+	   красим рамку в акцент и добавляем мягкую тень для отделения от фона. */
+	:global(html[data-theme="light"]) .closing-cta {
+		background:
+			radial-gradient(90% 140% at 50% 0%, rgba(255, 107, 43, 0.13), transparent 60%),
+			linear-gradient(135deg, rgba(201, 70, 255, 0.09), transparent 55%),
+			var(--bg-card);
+		border-color: color-mix(in srgb, var(--accent) 32%, var(--border));
+		box-shadow: 0 12px 34px rgba(160, 48, 208, 0.10), 0 2px 10px rgba(232, 93, 26, 0.06);
+	}
+
 	.closing-cta h2 {
 		font-size: 1.35rem;
 		font-weight: 800;
