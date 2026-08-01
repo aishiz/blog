@@ -54,7 +54,7 @@ export default function ExtrapolationBreakFix() {
 	return (
 		<div style={css.wrap}>
 			<div style={css.title}>💥 Экстраполяция ломается — и как её чинят</div>
-			<div style={css.desc}>Зелёная дуга — углы, которые модель видела при обучении (позиции 0…{L_TRAIN}). Двигай m за {L_TRAIN}: без патча стрелка уходит за дугу (OOD, красным). Включи NTK/YaRN-интерполяцию — позиция сжимается обратно в обученный диапазон. Иллюстративно, θ={THETA}.</div>
+			<div style={css.desc}>Зелёная дуга — углы, которые модель видела при обучении (позиции 0…{L_TRAIN}). Двигай m за {L_TRAIN}: без патча стрелка уходит за дугу (OOD, красным). Включи интерполяцию позиций — позиция сжимается обратно в обученный диапазон. Иллюстративно, θ={THETA}.</div>
 
 			<div style={css.main}>
 				<svg width={CX * 2} height={CY * 2} role="img" aria-label={`угол ${(angle * 180 / Math.PI).toFixed(0)} градусов, ${inRange ? 'в диапазоне' : 'вне диапазона'}`}>
@@ -73,7 +73,7 @@ export default function ExtrapolationBreakFix() {
 					</div>
 					<label style={css.toggle}>
 						<input type="checkbox" checked={fix} onChange={(e) => setFix(e.target.checked)} style={{ accentColor: '#22c55e' }} />
-						NTK/YaRN-интерполяция (сжать позицию в обученный диапазон)
+						Интерполяция позиций (сжать позицию в обученный диапазон)
 					</label>
 					<div style={css.verdict(inRange)}>
 						{inRange
