@@ -49,12 +49,12 @@
 
 ```python
 client = OpenAI(
-    base_url="https://foundation-models.api.cloud.ru/v1/",
-    api_key=os.environ["CLOUDRU_API_KEY"],  # ключ из личного кабинета: Evolution → Foundation Models
+    base_url="https://foundation-models.api.cloud.ru/v1",  # без завершающего слэша — как в доке
+    api_key=os.environ["CLOUDRU_API_KEY"],  # Key Secret сервисного аккаунта
 )
 ```
 
-Показываем: где взять ключ, выбор модели с function calling (напр. `GigaChat3.5-432B-A28B` / `DeepSeek-V4-Pro` — точные ID сверить на факт-пассе), первый запрос.
+Показываем: где взять ключ (Консоль → Пользователи → Сервисные аккаунты → Учетные данные доступа, скоуп Foundation Models), выбор модели с function calling, первый запрос. **ID моделей требуют префикс провайдера** — `ai-sage/GigaChat3-10B-A1.8B` (пример из квикстарта, дефолт туториала), `ai-sage/GigaChat3.5-432B-A28B`, `moonshotai/Kimi-K2.6`, `zai-org/GLM-5.1`, `deepseek-ai/DeepSeek-V4-Pro`.
 
 Рядом — короткая врезка «тот же код, другой провайдер»: локальный vLLM (`http://localhost:8000/v1`), Ollama (`http://localhost:11434/v1`), OpenRouter. Смысл: читатель понимает, что научился универсальному стандарту, а не привязке к вендору.
 
