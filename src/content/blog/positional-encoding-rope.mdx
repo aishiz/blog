@@ -13,6 +13,7 @@ import RopeRotation from '../../components/article/RopeRotation';
 import FrequencySpectrum from '../../components/article/FrequencySpectrum';
 import RelativePhase from '../../components/article/RelativePhase';
 import ExtrapolationBreakFix from '../../components/article/ExtrapolationBreakFix';
+import AttentionVectorPlayground from '../../components/article/AttentionVectorPlayground';
 
 Ну чё, малютки, в июле 2026 Thinking Machines выпустила Inkling и мимоходом сделала то, чего фронтир не делал с 2023-го: выкинула RoPE. Дословно — «relative positional embedding работает лучше и лучше экстраполируется на длинные последовательности, чем более распространённый Rotary Positional Embedding». Чтобы понять, почему это новость, надо понять, что вообще делает RoPE — и почему трансформеру без позиционного кодирования всё равно, в каком порядке идут токены. Разбираем механику от начала до конца, с визуальными демками: RoPE — это буквально вращение векторов, и его удобнее один раз увидеть, чем прочитать десять формул.
 
@@ -69,6 +70,10 @@ $$
 А разброс частот по измерениям (из Части 2) означает, что RoPE кодирует относительные расстояния сразу на многих масштабах — от «соседний токен» до «за тысячу позиций». Само слово «длина волны» для этих измерений закрепил позже пейпер YaRN; RoFormer называл это «long-term decay».
 
 <FrequencySpectrum client:visible />
+
+Всё это — про углы векторов. А зачем угол вообще влияет на ответ? Attention выбирает тот ключ, к которому запрос ближе по направлению: поверни вектор запроса — и на выход выходит другое слово. Пощупай сам:
+
+<AttentionVectorPlayground client:visible />
 
 ---
 
