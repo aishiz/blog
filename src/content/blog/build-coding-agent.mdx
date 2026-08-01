@@ -1,0 +1,625 @@
+---
+title: 'Собери свой Claude Code: кодовый агент на tool-calling за 166 строк 🤖🔧'
+description: 'Пошаговый туториал: пишем кодового агента, который читает репозиторий, правит код и сам гоняет тесты до зелёного. Чистый Python и openai SDK, без фреймворков. Работает на Cloud.ru Foundation Models и на любом OpenAI-совместимом endpoint — локальном vLLM, Ollama, OpenRouter.'
+pubDate: 'Aug 02 2026'
+category: 'тулы'
+---
+
+import Callout from '../../components/article/Callout.astro';
+import StepList from '../../components/article/StepList.astro';
+import AgentLoopVisualizer from '../../components/article/AgentLoopVisualizer';
+
+Ну чё, малютки, «агент» — это не магия, не фреймворк и не отдельная сущность, которую надо покупать по подписке. Это `while`-цикл вокруг вызова LLM с парой лишних телодвижений. В этой статье соберём мини-Claude-Code с нуля: голый Python, `openai` SDK и никаких LangChain/CrewAI/АвтоГенов между тобой и происходящим. К концу у тебя будет агент, который сам находит баг в коде, чинит его и гоняет тесты, пока они не позеленеют.
+
+Понадобится: Python 3.9+, `pip install openai`, и ключ к любому OpenAI-совместимому API (ниже покажу, где взять от Cloud.ru Foundation Models — но подойдёт и локальный vLLM).
+
+<Callout type="warning" title="⚠️ Прежде чем запускать">
+Агент, которого мы соберём, **выполняет shell-команды и правит файлы по указанию модели**. Модель иногда ошибается, иногда галлюцинирует, а руки у неё — самые настоящие. Гоняй это **только** в отдельной пустой папке-песочнице, а лучше — внутри контейнера. Никогда не натравливай на рабочий репозиторий, где есть что терять.
+</Callout>
+
+---
+
+## Часть 1: голый вызов LLM
+
+Начнём с самого скучного — просто спросим модель что-нибудь через Chat Completions.
+
+```python
+import os
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://foundation-models.api.cloud.ru/v1",
+    api_key=os.environ["API_KEY"],
+)
+
+resp = client.chat.completions.create(
+    model="ai-sage/GigaChat3-10B-A1.8B",
+    messages=[{"role": "user", "content": "Почини баг в файле calc.py"}],
+)
+print(resp.choices[0].message.content)
+```
+
+Ключ берётся так: Консоль Cloud.ru → **Пользователи → Сервисные аккаунты** → выбираешь (или создаёшь) сервисный аккаунт → **Учетные данные доступа** → создать API-ключ со скоупом **Foundation Models**. Важно: **Key Secret показывается ровно один раз**, в момент создания — не закрывай окно, пока не сохранишь.
+
+<Callout type="info" title="Если ловишь 401">
+Почти всегда причина одна: в `API_KEY` попал **Key ID**, а не **Key Secret**. Они выглядят похоже, но это разные строки — секрет тебе показывают один раз при создании ключа, а идентификатор потом видно всегда, и его легко скопировать по ошибке.
+</Callout>
+
+Заметь и ещё одну деталь: `model="ai-sage/GigaChat3-10B-A1.8B"` — префикс `ai-sage/` тут не декоративный, а обязательный. Cloud.ru раздаёт модели разных провайдеров через один endpoint, и без префикса API просто не поймёт, какую модель ты просишь.
+
+Запусти это — и получишь текст в духе «конечно, покажите мне содержимое calc.py, и я посмотрю, в чём проблема». Всё. Модель не откроет файл сама, не запустит тесты, ничего не почини́т руками. **Она может только говорить.** Чтобы что-то *сделать*, ей нужны руки — и это ровно то, что добавляет tool-calling.
+
+<Callout type="tip" title="✅ Тот же код, другой провайдер">
+Смени `base_url` и `api_key` — и всё, что мы напишем дальше, заработает на локальном vLLM (`http://localhost:8000/v1`), на Ollama (`http://localhost:11434/v1`) или на OpenRouter. Стандарт один: OpenAI-совместимый Chat Completions API с `tools`. Ничего провайдер-специфичного мы не используем.
+</Callout>
+
+---
+
+## Часть 2: первый тул и анатомия tool-calling
+
+Тул — это обычная python-функция плюс её описание в формате JSON Schema, которое мы отдаём модели. Вот самый простой из наших четырёх тулов — чтение файла:
+
+```python
+def read_file(path: str) -> str:
+    return _safe(path).read_text(encoding="utf-8")
+```
+
+```python
+{
+    "type": "function",
+    "function": {
+        "name": "read_file",
+        "description": "Прочитать файл и вернуть его содержимое.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Путь относительно рабочей папки"},
+            },
+            "required": ["path"],
+        },
+    },
+},
+```
+
+(`_safe` — это наша защита от побега за пределы песочницы, соберём её в следующей части. Пока просто поверь, что она возвращает безопасный путь.)
+
+Дальше — сам протокол round-trip, в три шага.
+
+**1. Что мы отправляем.** В `chat.completions.create` добавляется параметр `tools` — список таких схем:
+
+```python
+resp = client.chat.completions.create(
+    model=MODEL,
+    messages=messages,
+    tools=TOOLS,  # список JSON-схем — модель сама решает, вызвать тул или нет
+)
+```
+
+<Callout type="warning" title="⚠️ Не путай с устаревшим API">
+В старой версии OpenAI API это называлось `functions=` и `function_call=`. Это **deprecated**-форма, она ещё где-то встречается в старых туториалах, но использовать её не надо. Актуальный способ — `tools=` и `tool_choice=`.
+</Callout>
+
+**2. Что возвращает модель.** Если она решила вызвать тул, в ответе будет `tool_calls`:
+
+```python
+msg = resp.choices[0].message
+call = msg.tool_calls[0]
+
+call.id                    # "call_abc123" — нужен, чтобы позже привязать результат
+call.function.name         # "read_file"
+call.function.arguments    # '{"path": "calc.py"}'  — это СТРОКА, не dict!
+```
+
+Вот тут все спотыкаются в первый раз: `arguments` — это **JSON-строка**, а не питоновский словарь. Её нужно распарсить самому, и парсить нужно осторожно — сам SDK честно предупреждает, что модель не всегда генерирует валидный JSON. Поэтому парсинг всегда в `try`:
+
+```python
+import json
+
+try:
+    args = json.loads(call.function.arguments)
+except json.JSONDecodeError:
+    args = {}  # модель прислала кривой JSON — досадно, но не редкость
+
+result = read_file(**args)
+```
+
+**3. Что отправляем обратно.** Результат тула возвращается отдельным сообщением с ролью `tool`, привязанным к вызову через `tool_call_id`:
+
+```python
+messages.append({
+    "role": "tool",
+    "tool_call_id": call.id,   # тот же id, что был в call.id выше
+    "content": str(result),
+})
+```
+
+Если модель за один ход попросила сразу несколько тулов (`msg.tool_calls` — список, не один элемент), это правило применяется к каждому: свой `role: "tool"` на каждый `tool_call_id`, ни одного пропущенного.
+
+Потрогай это руками — вот тот же round-trip интерактивно, шаг за шагом:
+
+<AgentLoopVisualizer client:visible />
+
+---
+
+## Часть 3: полный луп и остальные тулы
+
+Теперь дособерём остальное. У агента будет четыре тула: `read_file` (уже видели), `write_file`, `list_dir` и `run_shell`. Вот они целиком, дословно из проверенного `agent.py`:
+
+```python
+WORKDIR = Path(os.environ.get("AGENT_WORKDIR", "sandbox")).resolve()
+
+
+def _safe(path: str) -> Path:
+    """Не выпускаем агента за пределы песочницы."""
+    p = (WORKDIR / path).resolve()
+    if not p.is_relative_to(WORKDIR):
+        raise ValueError(f"путь вне песочницы: {path}")
+    return p
+
+
+def write_file(path: str, content: str) -> str:
+    p = _safe(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content, encoding="utf-8")
+    return f"записано: {path} ({len(content)} символов)"
+
+
+def list_dir(path: str = ".") -> str:
+    p = _safe(path)
+    items = sorted(x.name + ("/" if x.is_dir() else "") for x in p.iterdir())
+    return "\n".join(items) or "(пусто)"
+
+
+def run_shell(cmd: str) -> str:
+    r = subprocess.run(
+        cmd, shell=True, cwd=WORKDIR,
+        capture_output=True, text=True, timeout=30,
+    )
+    return f"exit={r.returncode}\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+
+
+IMPL = {
+    "read_file": read_file,
+    "write_file": write_file,
+    "list_dir": list_dir,
+    "run_shell": run_shell,
+}
+```
+
+`_safe` — это одна строка, которая решает всё: `is_relative_to(WORKDIR)` не даёт агенту выйти за пределы песочницы через `../../etc/passwd` или абсолютный путь. `IMPL` — реестр «имя тула → функция», по нему луп будет находить, что реально вызвать, когда модель попросит тул по имени.
+
+Модели про эти тулы нужно рассказать той же JSON-схемой, что и `read_file` в прошлой части — просто повторяем паттерн для оставшихся трёх и получаем весь `TOOLS`:
+
+```python
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Прочитать файл и вернуть его содержимое.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Путь относительно рабочей папки"},
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Записать содержимое в файл, перезаписав существующий.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Путь относительно рабочей папки"},
+                    "content": {"type": "string", "description": "Новое содержимое файла целиком"},
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_dir",
+            "description": "Показать список файлов и папок.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Путь относительно рабочей папки"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_shell",
+            "description": "Выполнить shell-команду в рабочей папке и вернуть stdout, stderr и код возврата.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "cmd": {"type": "string", "description": "Команда, например 'python -m pytest -q'"},
+                },
+                "required": ["cmd"],
+            },
+        },
+    },
+]
+
+SYSTEM = (
+    "Ты — кодовый агент. У тебя есть тулы для работы с файлами и запуска команд "
+    "в рабочей папке. Действуй пошагово: сначала осмотрись, потом читай, потом правь. "
+    "После правок обязательно перезапусти тесты и убедись, что они зелёные. "
+    "Когда задача решена — ответь коротким текстом без вызова тулов."
+)
+```
+
+И, наконец, сердце всей статьи — сам цикл:
+
+```python
+def run_agent(task: str, max_steps: int = 25) -> str:
+    messages = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": task},
+    ]
+
+    for step in range(max_steps):
+        resp = client.chat.completions.create(
+            model=MODEL, messages=messages, tools=TOOLS,
+        )
+        msg = resp.choices[0].message
+        messages.append(msg)
+
+        # Модель ответила текстом без тулов — значит, это финальный ответ.
+        if not msg.tool_calls:
+            return msg.content or ""
+
+        for call in msg.tool_calls:
+            name = call.function.name
+            args = {}
+            try:
+                args = json.loads(call.function.arguments or "{}")
+                result = str(IMPL[name](**args))
+            except Exception as e:  # ошибку возвращаем модели, а не падаем
+                result = f"ОШИБКА {type(e).__name__}: {e}"
+
+            print(f"  [{step}] {name}({args}) -> {result[:80]!r}")
+            messages.append({
+                "role": "tool",
+                "tool_call_id": call.id,
+                "content": result[:8000],  # не раздуваем контекст
+            })
+
+    return "Лимит шагов исчерпан."
+```
+
+Три вещи, которые тут важно понять, а не просто скопировать:
+
+<StepList steps={[
+	{ num: "1", text: "<strong>Почему цикл, а не один вызов.</strong> Задача «почини код и добейся зелёных тестов» не решается одним запросом — нужно осмотреться, прочитать, поправить, перепроверить. Каждая итерация <code>for</code> — это один шаг мысли модели плюс одно реальное действие" },
+	{ num: "2", text: "<strong>Почему выход из цикла — это <code>not msg.tool_calls</code>.</strong> Модель сама решает, когда закончить: пока ей нужны тулы, она их просит. Как только она отвечает обычным текстом без вызовов — задача, по её мнению, решена, и <code>run_agent</code> возвращает этот текст" },
+	{ num: "3", text: "<strong>Почему <code>for call in msg.tool_calls</code>, а не один <code>call</code>.</strong> За один ход модель может попросить сразу несколько тулов параллельно — например, прочитать два файла одновременно. Луп обязан обработать каждый и вернуть по одному <code>role: \"tool\"</code> на каждый <code>tool_call_id</code>, иначе следующий запрос к API просто упадёт с ошибкой валидации" },
+]} />
+
+Собери всё вместе — импорты, `client`, `MODEL`, всё, что было выше, — и получится файл ровно на 166 строк. Вот он целиком, сохраняй как `agent.py`:
+
+```python
+"""Мини кодовый агент на tool-calling. 166 строк, без фреймворков."""
+
+import json
+import os
+import subprocess
+from pathlib import Path
+
+from openai import OpenAI
+
+# --- Песочница: всё, что делает агент, ограничено этой папкой -----------------
+WORKDIR = Path(os.environ.get("AGENT_WORKDIR", "sandbox")).resolve()
+
+client = OpenAI(
+    base_url=os.environ.get("BASE_URL", "https://foundation-models.api.cloud.ru/v1"),
+    api_key=os.environ.get("API_KEY", ""),
+)
+MODEL = os.environ.get("MODEL", "ai-sage/GigaChat3-10B-A1.8B")
+
+
+def _safe(path: str) -> Path:
+    """Не выпускаем агента за пределы песочницы."""
+    p = (WORKDIR / path).resolve()
+    if not p.is_relative_to(WORKDIR):
+        raise ValueError(f"путь вне песочницы: {path}")
+    return p
+
+
+# --- Тулы: обычные python-функции --------------------------------------------
+def read_file(path: str) -> str:
+    return _safe(path).read_text(encoding="utf-8")
+
+
+def write_file(path: str, content: str) -> str:
+    p = _safe(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content, encoding="utf-8")
+    return f"записано: {path} ({len(content)} символов)"
+
+
+def list_dir(path: str = ".") -> str:
+    p = _safe(path)
+    items = sorted(x.name + ("/" if x.is_dir() else "") for x in p.iterdir())
+    return "\n".join(items) or "(пусто)"
+
+
+def run_shell(cmd: str) -> str:
+    r = subprocess.run(
+        cmd, shell=True, cwd=WORKDIR,
+        capture_output=True, text=True, timeout=30,
+    )
+    return f"exit={r.returncode}\nstdout:\n{r.stdout}\nstderr:\n{r.stderr}"
+
+
+IMPL = {
+    "read_file": read_file,
+    "write_file": write_file,
+    "list_dir": list_dir,
+    "run_shell": run_shell,
+}
+
+# --- Те же тулы, но описанные для модели -------------------------------------
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Прочитать файл и вернуть его содержимое.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Путь относительно рабочей папки"},
+                },
+                "required": ["path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": "Записать содержимое в файл, перезаписав существующий.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Путь относительно рабочей папки"},
+                    "content": {"type": "string", "description": "Новое содержимое файла целиком"},
+                },
+                "required": ["path", "content"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "list_dir",
+            "description": "Показать список файлов и папок.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "path": {"type": "string", "description": "Путь относительно рабочей папки"},
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "run_shell",
+            "description": "Выполнить shell-команду в рабочей папке и вернуть stdout, stderr и код возврата.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "cmd": {"type": "string", "description": "Команда, например 'python -m pytest -q'"},
+                },
+                "required": ["cmd"],
+            },
+        },
+    },
+]
+
+SYSTEM = (
+    "Ты — кодовый агент. У тебя есть тулы для работы с файлами и запуска команд "
+    "в рабочей папке. Действуй пошагово: сначала осмотрись, потом читай, потом правь. "
+    "После правок обязательно перезапусти тесты и убедись, что они зелёные. "
+    "Когда задача решена — ответь коротким текстом без вызова тулов."
+)
+
+
+def run_agent(task: str, max_steps: int = 25) -> str:
+    messages = [
+        {"role": "system", "content": SYSTEM},
+        {"role": "user", "content": task},
+    ]
+
+    for step in range(max_steps):
+        resp = client.chat.completions.create(
+            model=MODEL, messages=messages, tools=TOOLS,
+        )
+        msg = resp.choices[0].message
+        messages.append(msg)
+
+        # Модель ответила текстом без тулов — значит, это финальный ответ.
+        if not msg.tool_calls:
+            return msg.content or ""
+
+        for call in msg.tool_calls:
+            name = call.function.name
+            args = {}
+            try:
+                args = json.loads(call.function.arguments or "{}")
+                result = str(IMPL[name](**args))
+            except Exception as e:  # ошибку возвращаем модели, а не падаем
+                result = f"ОШИБКА {type(e).__name__}: {e}"
+
+            print(f"  [{step}] {name}({args}) -> {result[:80]!r}")
+            messages.append({
+                "role": "tool",
+                "tool_call_id": call.id,
+                "content": result[:8000],  # не раздуваем контекст
+            })
+
+    return "Лимит шагов исчерпан."
+
+
+if __name__ == "__main__":
+    print(run_agent("Тесты падают. Найди причину, почини код и добейся, чтобы все тесты прошли."))
+```
+
+<Callout type="info" title="Другие модели с function calling">
+Модель по умолчанию — <code>ai-sage/GigaChat3-10B-A1.8B</code>, компактная и с корректным tool-calling. Если задача жирнее, у Cloud.ru Foundation Models есть модели помощнее с той же поддержкой <code>tools=</code>: <code>ai-sage/GigaChat3.5-432B-A28B</code>, <code>moonshotai/Kimi-K2.6</code>, <code>zai-org/GLM-5.1</code>, <code>deepseek-ai/DeepSeek-V4-Pro</code>. Меняется одна переменная окружения — код агента трогать не нужно.
+</Callout>
+
+---
+
+## Часть 4: реальная задача
+
+Теория — это хорошо, а теперь скормим агенту настоящий баг. Создай рядом с `agent.py` папку `sandbox/` с двумя файлами.
+
+`sandbox/calc.py`:
+
+```python
+def add(a, b):
+    return a - b
+
+
+def mul(a, b):
+    return a * b
+```
+
+`sandbox/test_calc.py`:
+
+```python
+from calc import add, mul
+
+
+def test_add():
+    assert add(2, 3) == 5
+
+
+def test_mul():
+    assert mul(2, 3) == 6
+```
+
+Баг тут нарочито дурацкий — в `add` перепутан знак — но это неважно. С точки зрения агента внутри «сломанный код» не отличается от рефактора, регресса или опечатки: он просто гоняет тесты, смотрит, что упало, и правит.
+
+<Callout type="warning" title="⚠️ Грабли: python vs python3">
+Агент сам решает, какую команду выполнить, и почти наверняка попросит <code>run_shell</code> с чем-то вроде <code>python -m pytest -q</code>. На многих системах (особенно на свежем Ubuntu/Debian) бинаря <code>python</code> **просто нет** — есть только <code>python3</code>. Тул при этом не падает и не кидает исключение: <code>subprocess.run</code> тихо возвращает <code>exit=127</code>, <code>stderr: python: not found</code>, и агент видит это как «результат», а не как сбой окружения. Он может зациклиться, пытаясь понять, что не так с тестами, хотя тесты вообще не запускались. Лечится активацией venv перед стартом (`python -m venv venv && source venv/bin/activate`) — тогда `python` в `PATH` резолвится туда же, куда и `python3`.
+</Callout>
+
+Дальше — реальный лог. Важная оговорка: чтобы трейс ниже был воспроизводимым и не зависел от того, какой ключ и какая модель у тебя под рукой прямо сейчас, ответы LLM в этом конкретном прогоне были сценарными (модель детерминированно проигрывала «осмотрись → тесты → чтение → правка → тесты»). А вот всё остальное — по-настоящему: `agent.py` реально читал и писал файлы на диске в `sandbox/`, и `run_shell` реально гонял `pytest` через `subprocess`, без единой заглушки. С живым ключом Cloud.ru или локальной моделью получишь ровно такую же форму трейса — просто решения по шагам будет принимать модель, а не сценарий.
+
+Вот что печатает `run_agent` по ходу работы:
+
+```
+  [0] list_dir({'path': '.'}) -> 'calc.py\ntest_calc.py'
+  [1] run_shell({'cmd': 'python -m pytest -q'}) -> 'exit=1\nstdout:\nF.                                                               '
+  [2] read_file({'path': 'calc.py'}) -> 'def add(a, b):\n    return a - b\n\n\ndef mul(a, b):\n    return a * b\n'
+  [3] write_file({'path': 'calc.py', 'content': 'def add(a, b):\n    return a + b\n\n\ndef mul(a, b):\n    return a * b\n'}) -> 'записано: calc.py (66 символов)'
+  [4] run_shell({'cmd': 'python -m pytest -q'}) -> 'exit=0\nstdout:\n..                                                               '
+ФИНАЛ: Готово: баг в add() был в знаке, тесты зелёные.
+```
+
+Разложим по шагам, что произошло:
+
+<StepList steps={[
+	{ num: "0", text: "<strong>Осмотрелся</strong> — <code>list_dir</code> показал, что в папке лежат <code>calc.py</code> и <code>test_calc.py</code>" },
+	{ num: "1", text: "<strong>Запустил тесты</strong> — <code>run_shell(\"python -m pytest -q\")</code>, получил <code>exit=1</code>: один тест упал" },
+	{ num: "2", text: "<strong>Прочитал файл</strong> — <code>read_file(\"calc.py\")</code>, увидел <code>a - b</code> вместо <code>a + b</code>" },
+	{ num: "3", text: "<strong>Починил</strong> — <code>write_file</code> с тем же файлом, но исправленным знаком" },
+	{ num: "4", text: "<strong>Перезапустил тесты</strong> — <code>exit=0</code>, зелено" },
+	{ num: "final", text: "<strong>Отчитался текстом без tool_calls</strong> — луп увидел это и вышел" },
+]} />
+
+А вот что реально выплюнул pytest на шаге `[1]`, целиком (в контекст модели это тоже уходит целиком — усечёнными для читателя тут выглядят только строки прогресс-бара):
+
+```
+F.                                                                       [100%]
+=================================== FAILURES ===================================
+___________________________________ test_add ___________________________________
+
+    def test_add():
+>       assert add(2, 3) == 5
+E       assert -1 == 5
+E        +  where -1 = add(2, 3)
+
+test_calc.py:5: AssertionError
+=========================== short test summary info ============================
+FAILED test_calc.py::test_add - assert -1 == 5
+1 failed, 1 passed in 0.01s
+```
+
+И на шаге `[4]`, после правки:
+
+```
+..                                                                       [100%]
+2 passed in 0.00s
+```
+
+Ровно этот трейс модель и видит в своём контексте — сырой вывод pytest, без прикрас. Собственно, по нему она и понимает, что чинить и когда останавливаться.
+
+---
+
+## Часть 5: прод-нюансы
+
+Всё, что выше, — рабочий агент, но пять вещей отличают учебный пример от того, что не развалится на реальной задаче.
+
+**1. Жёсткий лимит шагов.** Без него застрявший агент будет долбить одно и то же, пока не кончится баланс на API. `max_steps: int = 25` в сигнатуре `run_agent` — не деталь, это обязательный тормоз:
+
+```python
+for step in range(max_steps):
+    ...
+return "Лимит шагов исчерпан."
+```
+
+**2. Ошибки тула — это данные для модели, а не повод падать.** Если `write_file` бросит исключение (файл занят, диск полон, кривой путь) — это не должно уронить весь процесс. Ошибка оборачивается в текст и уходит туда же, куда и обычный результат — в `role: "tool"`. Модель часто способна сама исправиться, увидев текст ошибки:
+
+```python
+except Exception as e:  # ошибку возвращаем модели, а не падаем
+    result = f"ОШИБКА {type(e).__name__}: {e}"
+```
+
+**3. Обрезка результата.** Команда может вернуть мегабайты лога. Без обрезки контекст раздувается за пару шагов, а с ним растёт и счёт за токены:
+
+```python
+"content": result[:8000],  # не раздуваем контекст
+```
+
+**4. Параллельные `tool_calls`.** Уже упоминал в части 3, но это стоит подсветить отдельно как прод-требование: модели с хорошим tool-calling любят запрашивать несколько независимых тулов за один ход (два `read_file` разом, например). Если луп обработает только `msg.tool_calls[0]` и забудет про остальные — следующий запрос к API упадёт, потому что не на каждый `tool_call_id` из предыдущего ответа нашёлся ответный `role: "tool"`. `for call in msg.tool_calls` обязателен, не `if`.
+
+**5. Безопасность `run_shell` — это не мелочь, это половина риска всей конструкции.** У нас уже есть таймаут (`timeout=30`, чтобы зависшая команда не подвесила весь луп) и привязка к `WORKDIR`. Но `subprocess.run(shell=True)` — это не песочница, а просто вызов шелла: агент внутри своей рабочей папки может дёрнуть `curl`, `rm -rf .`, что угодно, лишь бы путь не выходил за `_safe`. Для реальной задачи это значит: контейнер с ограниченными правами и сетью, отдельный пользователь без sudo, а лучше — то и другое сразу.
+
+Дальше есть куда расти: [харнес агента](/blog/agent-harness/) — про то, как масштабируется этот же цикл, когда тулов не 4, а 40, и как в игру вступает управление контекстом; [MCP](/blog/mcp-protocol-deep-dive/) — как не писать интеграцию с каждым источником данных вручную, а подключать готовые серверы тулов; [структурированные выводы](/blog/structured-outputs/) — та же механика, что гарантирует валидный JSON в `arguments`, только на уровне модели, а не try/except; и [ландшафт агентных систем](/blog/ai-agents-landscape/) — если любопытно, куда всё это движется дальше в масштабе индустрии.
+
+---
+
+## TL;DR
+
+<StepList steps={[
+	{ num: "1", text: "<strong>Агент — это цикл</strong>, а не фреймворк: спросил модель → выполнил тулы → вернул результаты → повторил" },
+	{ num: "2", text: "<strong>Тул</strong> = обычная функция + её JSON-схема в <code>tools</code>" },
+	{ num: "3", text: "<strong>arguments — строка JSON</strong>, парсить через <code>json.loads</code> и обязательно в try" },
+	{ num: "4", text: "<strong>Результат возвращается</strong> сообщением <code>role: \"tool\"</code> с тем же <code>tool_call_id</code>" },
+	{ num: "5", text: "<strong>Выход из цикла</strong> — ответ модели без <code>tool_calls</code>; плюс жёсткий лимит шагов" },
+]} />
+
+---
+
+### Источники
+
+1. [Быстрый старт Foundation Models — Cloud.ru](https://cloud.ru/docs/foundation-models/ug/topics/quickstart)
+2. [Справочник API Foundation Models — Cloud.ru](https://cloud.ru/docs/foundation-models/ug/topics/api-ref)
+3. [Обзор доступных AI-моделей — Cloud.ru](https://cloud.ru/docs/foundation-models/ug/topics/overview__available__models)
+4. [Function calling — OpenAI docs](https://platform.openai.com/docs/guides/function-calling)
+
+Читать в блоге дальше: [харнес агента](/blog/agent-harness/), [MCP изнутри](/blog/mcp-protocol-deep-dive/), [структурированные выводы](/blog/structured-outputs/), [ландшафт агентных систем](/blog/ai-agents-landscape/).
