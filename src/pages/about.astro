@@ -674,6 +674,13 @@ const breadcrumbSchema = {
 		margin-bottom: 0.35rem;
 	}
 
+	/* Светлая тема: жёлтый/светлые акценты плохо читаются мелким текстом на белом —
+	   подмешиваем текстовый цвет в тег и иконку для контраста. Тёмную тему не трогаем. */
+	:global(html[data-theme="light"]) .product-tag,
+	:global(html[data-theme="light"]) .product-icon {
+		color: color-mix(in srgb, var(--pa) 65%, var(--text));
+	}
+
 	.product-body h3 {
 		font-size: 1.1rem;
 		font-weight: 800;
@@ -696,7 +703,7 @@ const breadcrumbSchema = {
 		font-weight: 800;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
-		color: var(--text-muted);
+		color: var(--text-secondary);
 		padding: 0.2rem 0.55rem;
 		border-radius: 100px;
 		border: 1px solid var(--border);
