@@ -16,6 +16,7 @@ const PRODUCTS = [
 		tag: "Автономные агенты",
 		desc: "Фреймворк для сборки и интеграции мультиагентных систем прямо в рабочие процессы — от прототипа до прода.",
 		accent: "var(--accent)",
+		mine: "делал сам",
 	},
 	{
 		key: "models",
@@ -23,6 +24,7 @@ const PRODUCTS = [
 		tag: "Модели по API",
 		desc: "Готовые LLM и AI-модели по API — проприетарные и open-source (GigaChat, OpenAI, QWEN, GLM), без своей инфраструктуры.",
 		accent: "var(--accent-secondary)",
+		mine: "тестил сам",
 	},
 	{
 		key: "inference",
@@ -30,6 +32,7 @@ const PRODUCTS = [
 		tag: "Инференс · GPU",
 		desc: "Инфраструктура инференса и деплоя AI/LLM-моделей: автоскейлинг на GPU, throughput и экономика на проде.",
 		accent: "var(--accent-yellow)",
+		mine: "запускал сам",
 	},
 	{
 		key: "rag",
@@ -37,6 +40,7 @@ const PRODUCTS = [
 		tag: "RAG под ключ",
 		desc: "RAG на данных организации как готовый сервис: индексация, retrieval и генерация из коробки, а не сборка руками.",
 		accent: "var(--accent-magenta)",
+		mine: "тестил сам",
 	},
 ];
 
@@ -46,12 +50,12 @@ const personSchema = {
 	"name": "Артемий Мазаев",
 	"url": new URL('/about', Astro.site).toString(),
 	"image": new URL(aboutPhoto.src, Astro.site).toString(),
-	"jobTitle": "Руководитель AI Factory",
+	"jobTitle": "Продукт-лид продуктов AI Factory",
 	"worksFor": {
 		"@type": "Organization",
 		"name": "AI Factory"
 	},
-	"description": "Руководитель AI Factory, AI-инженер, автор блога ЭЙ АЙ ШИЗ. Создал продукты Evolution AI Agents, Evolution Foundation Models, Evolution ML Inference и Evolution Managed RAG. Специализируюсь на AI-агентах, LLM, ML Inference и квантизации моделей.",
+	"description": "Продукт-лид продуктов AI Factory, AI-инженер, автор блога ЭЙ АЙ ШИЗ. Отвечаю за продукты Evolution AI Agents, Evolution Foundation Models, Evolution ML Inference и Evolution Managed RAG — тестировал их сам, запускал модели, собирал агентов. Специализируюсь на AI-агентах, LLM, ML Inference и квантизации моделей.",
 	"alumniOf": {
 		"@type": "EducationalOrganization",
 		"name": "МАИ (Московский авиационный институт)"
@@ -72,7 +76,7 @@ const breadcrumbSchema = {
 
 <html lang="ru">
 	<head>
-		<BaseHead title={`Обо мне — ${SITE_TITLE}`} description="Артемий Мазаев — руководитель AI Factory, AI-инженер и автор блога ЭЙ АЙ ШИЗ. Создал продукты Evolution AI Agents, Evolution Foundation Models, Evolution ML Inference и Evolution Managed RAG.">
+		<BaseHead title={`Обо мне — ${SITE_TITLE}`} description="Артемий Мазаев — продукт-лид продуктов AI Factory, AI-инженер и автор блога ЭЙ АЙ ШИЗ. Отвечаю за продукты Evolution AI Agents, Evolution Foundation Models, Evolution ML Inference и Evolution Managed RAG — тестировал сам, запускал модели, делал агентов.">
 			<script type="application/ld+json" set:html={JSON.stringify(personSchema)} />
 			<script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
 		</BaseHead>
@@ -92,12 +96,13 @@ const breadcrumbSchema = {
 
 					<div class="role-badge">
 						<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M17 18h1"/><path d="M12 18h1"/><path d="M7 18h1"/></svg>
-						<span><strong>Руководитель</strong> AI&nbsp;Factory</span>
+						<span><strong>Продукт-лид</strong> AI&nbsp;Factory</span>
 					</div>
 
 					<p class="lead">
-						AI&nbsp;Agents, Foundation&nbsp;Models, ML&nbsp;Inference, Managed&nbsp;RAG&nbsp;—
-						все эти продукты я создал сам, руками, бессонными ночами.
+						AI&nbsp;Agents, Foundation&nbsp;Models, ML&nbsp;Inference, Managed&nbsp;RAG.
+						Был продактом этих продуктов, стал продукт-лидом&nbsp;— но тестил их сам,
+						модели запускал сам, агентов делал сам.
 					</p>
 					<div class="about-actions">
 						<a href="/blog" class="cta-button">
@@ -126,7 +131,7 @@ const breadcrumbSchema = {
 				</div>
 				<div class="stat-card" style="--sc: var(--accent-secondary);">
 					<span class="stat-value">4</span>
-					<span class="stat-label">Продукта с нуля</span>
+					<span class="stat-label">Продукта в проде</span>
 				</div>
 				<div class="stat-card" style="--sc: var(--accent-yellow);">
 					<span class="stat-value">DS &rarr; Lead</span>
@@ -138,11 +143,11 @@ const breadcrumbSchema = {
 				</div>
 			</section>
 
-			<section class="products" aria-label="Продукты, которые я создал">
+			<section class="products" aria-label="Продукты, за которые я отвечаю">
 				<div class="products-head">
 					<span class="label">AI&nbsp;Factory</span>
-					<h2>Продукты, которые я создал</h2>
-					<p class="products-sub">Продукты платформы Evolution&nbsp;AI&nbsp;Factory — собрал каждый от первой строчки кода до прода.</p>
+					<h2>Продукты, за которые я отвечаю</h2>
+					<p class="products-sub">Продукты платформы Evolution&nbsp;AI&nbsp;Factory. Был продактом, стал продукт-лидом&nbsp;— и всё это тестил сам, модели запускал сам, агентов делал сам.</p>
 				</div>
 				<div class="products-grid">
 					{PRODUCTS.map((p) => (
@@ -166,7 +171,7 @@ const breadcrumbSchema = {
 								<h3>{p.name}</h3>
 								<p>{p.desc}</p>
 							</div>
-							<span class="product-mine">создал сам</span>
+							<span class="product-mine">{p.mine}</span>
 						</article>
 					))}
 				</div>
@@ -230,7 +235,7 @@ const breadcrumbSchema = {
 				<div class="achievements-grid">
 					<div class="ach-card">
 						<span class="ach-num">01</span>
-						<p>Возглавил AI&nbsp;Factory и собрал линейку продуктов</p>
+						<p>Стал продукт-лидом линейки продуктов AI&nbsp;Factory</p>
 					</div>
 					<div class="ach-card">
 						<span class="ach-num">02</span>
