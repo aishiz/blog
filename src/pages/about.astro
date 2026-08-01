@@ -170,8 +170,8 @@ const breadcrumbSchema = {
 								<span class="product-tag">{p.tag}</span>
 								<h3>{p.name}</h3>
 								<p>{p.desc}</p>
+								<span class="product-mine">{p.mine}</span>
 							</div>
-							<span class="product-mine">{p.mine}</span>
 						</article>
 					))}
 				</div>
@@ -987,7 +987,8 @@ const breadcrumbSchema = {
 		.stat-label { font-size: 0.7rem; }
 		.products-head h2 { font-size: 1.3rem; }
 		.product-card { padding: 1.15rem; gap: 0.9rem; }
-		.product-mine { display: none; }
+		/* на узких экранах бейдж не влезает в правый верх — выводим строкой под описанием */
+		.product-mine { position: static; display: inline-block; margin: 0.85rem 0 0; }
 		.bio h2, .life-section h2, .achievements-section h2 { font-size: 1.2rem; }
 		.bio p { font-size: 0.92rem; }
 		.life-content p { font-size: 0.88rem; }
