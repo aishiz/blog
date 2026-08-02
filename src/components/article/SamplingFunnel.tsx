@@ -80,7 +80,7 @@ function useIsMobile(bp = 520) {
 function barPct(count: number): number {
 	const num = Math.log10(count + 1);
 	const den = Math.log10(VOCAB + 1);
-	return Math.max(2, (num / den) * 100);
+	return Math.min(100, Math.max(2, (num / den) * 100));
 }
 
 function fmt(n: number): string {
@@ -132,7 +132,10 @@ export default function SamplingFunnel() {
 			<div style={css.title}>🔻 Воронка сэмплинга целиком</div>
 			<div style={css.desc}>
 				Один шаг генерации — от полного словаря до одного выбранного токена. Ничего нового: это те же четыре
-				ручки, только собранные в один конвейер, чтобы увидеть всю форму сразу.
+				ручки, только собранные в один конвейер, чтобы увидеть всю форму сразу. Числа кандидатов ниже —
+				смоделированы для наглядности, а не измерены на реальном форвард-пассе: точные значения зависят от
+				логитов конкретной модели на конкретном шаге, которых у нас нет. Порядок ручек и характер их эффекта —
+				настоящие.
 			</div>
 			<div style={css.order}>порядок как в vLLM: словарь → temperature → min_p → top_k → top_p → 1 токен</div>
 
