@@ -17,11 +17,13 @@ const MIN_T = 0.1;
 const MAX_T = 2;
 const STEP_T = 0.1;
 
-// Ось левой панели откалибрована так, чтобы самый большой по модулю логит упирался
-// в край шкалы уже при T = 0.5 — на меньшей T бары дальше расти визуально не могут
-// (шкала конечна), но точное число рядом с баром всегда честное.
+// Компрессивная (symlog-подобная) шкала левой панели: pct = 50 * |v| / (|v| + K).
+// Бар асимптотически приближается к краю трека, но никогда в него не «упирается» —
+// в отличие от жёсткого клампа, тут видно движение на всём диапазоне T, включая
+// T → 0.1, где отношение лидер/второе место взлетает сильнее всего. K = модуль
+// самого большого логита, чтобы дефолтный вид при T = 1 был близок к линейному.
 const MAX_ABS_LOGIT = Math.max(...TOKENS.map((tk) => Math.abs(tk.l)));
-const AXIS_MAX = MAX_ABS_LOGIT * 2;
+const AXIS_K = MAX_ABS_LOGIT;
 
 function softmax(logits: number[]): number[] {
 	const max = Math.max(...logits);
@@ -121,15 +123,6 @@ const css = {
 		background: positive ? '#22c55e' : '#ef4444',
 		transition: 'left 0.15s ease, width 0.15s ease',
 	} as React.CSSProperties),
-	logitVal: {
-		width: '48px',
-		flexShrink: 0,
-		fontSize: '0.74rem',
-		fontWeight: 700,
-		textAlign: 'right' as const,
-		fontVariantNumeric: 'tabular-nums' as const,
-		color: 'var(--text-secondary)',
-	} as React.CSSProperties,
 	track: {
 		flex: 1,
 		height: '14px',
@@ -143,7 +136,9 @@ const css = {
 		background: color,
 		transition: 'width 0.15s ease, background 0.2s ease',
 	} as React.CSSProperties),
-	val: {
+	// Общий стиль числового значения в конце строки — используется и логит-панелью,
+	// и панелью вероятностей (раньше это были два идентичных объекта).
+	numVal: {
 		width: '48px',
 		flexShrink: 0,
 		fontSize: '0.74rem',
@@ -223,7 +218,7 @@ export default function TemperatureShape() {
 					{TOKENS.map((tk, i) => {
 						const v = scaled[i];
 						const positive = v >= 0;
-						const pct = Math.min(50, (Math.abs(v) / AXIS_MAX) * 50);
+						const pct = (50 * Math.abs(v)) / (Math.abs(v) + AXIS_K);
 						return (
 							<div key={tk.t} style={css.row}>
 								<span style={css.tok}>{tk.t}</span>
@@ -231,7 +226,7 @@ export default function TemperatureShape() {
 									<div style={css.zeroLine} />
 									<div style={css.logitBar(pct, positive)} />
 								</div>
-								<span style={css.logitVal}>{v.toFixed(1)}</span>
+								<span style={css.numVal}>{v.toFixed(1)}</span>
 							</div>
 						);
 					})}
@@ -249,7 +244,7 @@ export default function TemperatureShape() {
 								<div style={css.track}>
 									<div style={css.fill(p * 100, color)} />
 								</div>
-								<span style={css.val}>{(p * 100).toFixed(1)}%</span>
+								<span style={css.numVal}>{(p * 100).toFixed(1)}%</span>
 							</div>
 						);
 					})}
