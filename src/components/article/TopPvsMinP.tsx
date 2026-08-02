@@ -65,7 +65,7 @@ function Column({ name, sub, dist, alive }: { name: string; sub: string; dist: {
 					<span style={css.val}>{(d.p * 100).toFixed(1)}</span>
 				</div>
 			))}
-			<div style={css.count(n <= 2 ? 'var(--accent-yellow)' : 'var(--accent)')}>выжило: {n} из {dist.length}</div>
+			<div style={css.count(n <= 2 ? 'var(--accent-yellow-text)' : 'var(--accent)')}>выжило: {n} из {dist.length}</div>
 		</div>
 	);
 }

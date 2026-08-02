@@ -76,7 +76,7 @@ function pipeline(temp: number, topK: number, topP: number, minP: number) {
 
 const KILL_COLOR: Record<string, string> = {
 	min_p: 'var(--accent-magenta)',
-	top_k: 'var(--accent-yellow)',
+	top_k: 'var(--accent-yellow-text)',
 	top_p: 'var(--accent-secondary)',
 };
 
@@ -145,7 +145,7 @@ export default function SamplingPlayground() {
 					<span style={css.num}>{minP.toFixed(2)}</span>
 				</div>
 				<div style={css.ctl}>
-					<span style={css.label('var(--accent-yellow)')}>top_k</span>
+					<span style={css.label('var(--accent-yellow-text)')}>top_k</span>
 					<input style={css.slider} type="range" min={0} max={TOKENS.length} step={1} value={topK} onChange={(e) => setTopK(Number(e.target.value))} />
 					<span style={css.num}>{topK === 0 ? 'off' : topK}</span>
 				</div>

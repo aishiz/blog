@@ -11,6 +11,7 @@
 	--accent-light: #ff8f4d;
 	--accent-secondary: #c946ff;
 	--accent-yellow: #ffd93d;
+	--accent-yellow-text: #ffd93d;
 	--accent-magenta: #e040a0;
 	--accent-glow: rgba(255, 107, 43, 0.12);
 	--border: #222250;
@@ -45,6 +46,7 @@
 	--accent-light: #d4510f;
 	--accent-secondary: #a030d0;
 	--accent-yellow: #c9a000;
+	--accent-yellow-text: #7a6200;
 	--accent-magenta: #c03080;
 	--accent-glow: rgba(232, 93, 26, 0.08);
 	--border: #ddd8ec;

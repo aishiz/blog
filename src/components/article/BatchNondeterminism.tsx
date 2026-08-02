@@ -21,7 +21,7 @@ const css = {
 	desc: { fontSize: '0.88rem', color: 'var(--text-muted)', marginBottom: '1.1rem', lineHeight: 1.6 } as React.CSSProperties,
 	sub: { fontSize: '0.74rem', fontWeight: 700, textTransform: 'uppercase' as const, letterSpacing: '0.04em', color: 'var(--text-muted)', margin: '1.1rem 0 0.5rem' } as React.CSSProperties,
 	code: { display: 'block', padding: '0.7rem 0.85rem', borderRadius: '8px', background: 'var(--bg-secondary)', border: '1px solid var(--border)', fontSize: '0.8rem', lineHeight: 1.7, color: 'var(--text-secondary)', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace', whiteSpace: 'pre-wrap' as const, wordBreak: 'break-word' as const } as React.CSSProperties,
-	hl: { color: 'var(--accent-yellow)', fontWeight: 800 } as React.CSSProperties,
+	hl: { color: 'var(--accent-yellow-text)', fontWeight: 800 } as React.CSSProperties,
 	btns: { display: 'flex', gap: '0.5rem', marginTop: '0.8rem', flexWrap: 'wrap' as const } as React.CSSProperties,
 	btn: (on: boolean) => ({ padding: '0.4rem 0.9rem', borderRadius: '100px', border: `1px solid ${on ? 'var(--accent)' : 'var(--border)'}`, background: on ? 'var(--accent-glow)' : 'var(--bg-secondary)', color: on ? 'var(--accent-light)' : 'var(--text-muted)', fontSize: '0.78rem', fontWeight: 700, cursor: 'pointer', fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace' } as React.CSSProperties),
 	table: { width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.78rem', fontVariantNumeric: 'tabular-nums' as const } as React.CSSProperties,
