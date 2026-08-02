@@ -36,7 +36,7 @@ const css = {
 	row: { display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' } as React.CSSProperties,
 	tok: (hot: boolean) => ({ width: '84px', flexShrink: 0, fontSize: '0.8rem', fontWeight: hot ? 800 : 600, color: hot ? '#22c55e' : 'var(--text-secondary)' } as React.CSSProperties),
 	track: { flex: 1, height: '13px', borderRadius: '4px', background: 'var(--bg-secondary)', overflow: 'hidden', position: 'relative' as const } as React.CSSProperties,
-	target: (pct: number) => ({ position: 'absolute' as const, left: `${pct}%`, top: 0, bottom: 0, width: '2px', background: 'var(--accent-yellow)' } as React.CSSProperties),
+	target: (pct: number) => ({ position: 'absolute' as const, left: `${pct}%`, top: 0, bottom: 0, width: '2px', background: 'var(--text)' } as React.CSSProperties),
 	fill: (pct: number) => ({ width: `${pct}%`, height: '100%', background: 'var(--accent)' } as React.CSSProperties),
 	val: { width: '96px', flexShrink: 0, fontSize: '0.74rem', textAlign: 'right' as const, fontVariantNumeric: 'tabular-nums' as const, color: 'var(--text-muted)' } as React.CSSProperties,
 	btns: { display: 'flex', gap: '0.5rem', marginTop: '1rem', alignItems: 'center', flexWrap: 'wrap' as const } as React.CSSProperties,
@@ -71,8 +71,9 @@ export default function SamplingDice() {
 			<div style={css.title}>🎲 Сэмплирование — это бросок костей</div>
 			<div style={css.desc}>
 				Ручки решают, кто вообще участвует. Дальше токен выбирается случайно, с весом своей вероятности.
-				Жми — жёлтая риска показывает истинную вероятность, столбик — накопленную частоту. Чем больше бросков,
-				тем ближе одно к другому.
+				Жми — риска показывает истинную вероятность, столбик — накопленную частоту. Чем больше бросков,
+				тем ближе одно к другому. Веса здесь иллюстративные и уже после обрезки хвоста — как в песочнице
+				выше, для наглядности, а не реальные логиты модели.
 			</div>
 
 			{DIST.map((d, i) => {
