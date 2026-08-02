@@ -74,8 +74,14 @@ export default function TopPvsMinP() {
 	const [mode, setMode] = useState<'top_p' | 'min_p'>('top_p');
 	const [v, setV] = useState(0.9);
 
-	const conf = mode === 'top_p' ? surviveTopP(CONFIDENT, v) : surviveMinP(CONFIDENT, v);
-	const flat = mode === 'top_p' ? surviveTopP(FLAT, v) : surviveMinP(FLAT, v);
+	// Слайдеры top_p и min_p живут в разных диапазонах — при переключении режима
+	// без движения ползунка старое значение может оказаться выше нового максимума.
+	// Клампим здесь же, чтобы подпись, положение ползунка и расчёт всегда совпадали.
+	const max = mode === 'top_p' ? 1 : 0.6;
+	const vClamped = Math.min(v, max);
+
+	const conf = mode === 'top_p' ? surviveTopP(CONFIDENT, vClamped) : surviveMinP(CONFIDENT, vClamped);
+	const flat = mode === 'top_p' ? surviveTopP(FLAT, vClamped) : surviveMinP(FLAT, vClamped);
 
 	return (
 		<div style={css.wrap}>
@@ -97,8 +103,8 @@ export default function TopPvsMinP() {
 
 			<div style={css.ctl}>
 				<span style={{ ...css.num, width: '58px', textAlign: 'left' }}>{mode}</span>
-				<input style={css.slider} type="range" min={0.02} max={mode === 'top_p' ? 1 : 0.6} step={0.01} value={v} onChange={(e) => setV(Number(e.target.value))} />
-				<span style={css.num}>{v.toFixed(2)}</span>
+				<input style={css.slider} type="range" min={0.02} max={max} step={0.01} value={vClamped} onChange={(e) => setV(Number(e.target.value))} />
+				<span style={css.num}>{vClamped.toFixed(2)}</span>
 			</div>
 
 			<div style={css.note}>
