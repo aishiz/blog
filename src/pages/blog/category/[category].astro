@@ -51,7 +51,7 @@ const collectionSchema = {
 		"@type": "BreadcrumbList",
 		"itemListElement": [
 			{ "@type": "ListItem", "position": 1, "name": "Главная", "item": Astro.site?.toString() },
-			{ "@type": "ListItem", "position": 2, "name": "Статьи", "item": new URL('/blog', Astro.site).toString() },
+			{ "@type": "ListItem", "position": 2, "name": "Статьи", "item": new URL('/blog/', Astro.site).toString() },
 			{ "@type": "ListItem", "position": 3, "name": cat.title, "item": canonicalURL.toString() }
 		]
 	}
@@ -70,14 +70,14 @@ const collectionSchema = {
 		<ScrollToTop />
 		<main>
 			<div class="page-header">
-				<p class="breadcrumb"><a href="/blog">Статьи</a> / {cat.title}</p>
+				<p class="breadcrumb"><a href="/blog/">Статьи</a> / {cat.title}</p>
 				<div class="page-title-row">
 					<h1>{cat.title}</h1>
 					<span class="count">{posts.length}</span>
 				</div>
 				<p>{cat.blurb}</p>
 				<div class="filter-row" role="group" aria-label="Рубрики">
-					<a class="filter-chip" href="/blog">Все</a>
+					<a class="filter-chip" href="/blog/">Все</a>
 					{CATEGORIES.map((c) => (
 						<a
 							class:list={['filter-chip', { active: c.slug === cat.slug }]}

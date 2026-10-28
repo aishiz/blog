@@ -40,13 +40,13 @@ const articleSchema = {
 	"url": canonicalURL.toString(),
 	...(imageURL && { "image": imageURL }),
 	"datePublished": pubDate.toISOString(),
-	...(updatedDate && { "dateModified": updatedDate.toISOString() }),
+	"dateModified": (updatedDate ?? pubDate).toISOString(),
 	...(category && { "articleSection": category }),
 	...(wordCount && { "wordCount": wordCount }),
 	"author": {
 		"@type": "Person",
 		"name": AUTHOR_NAME,
-		"url": new URL('/about', Astro.site).toString()
+		"url": new URL('/about/', Astro.site).toString()
 	},
 	"publisher": {
 		"@type": "Organization",
@@ -69,7 +69,7 @@ const breadcrumbSchema = {
 	"@type": "BreadcrumbList",
 	"itemListElement": [
 		{ "@type": "ListItem", "position": 1, "name": "Главная", "item": Astro.site?.toString() },
-		{ "@type": "ListItem", "position": 2, "name": "Статьи", "item": new URL('/blog', Astro.site).toString() },
+		{ "@type": "ListItem", "position": 2, "name": "Статьи", "item": new URL('/blog/', Astro.site).toString() },
 		{ "@type": "ListItem", "position": 3, "name": title, "item": canonicalURL.toString() }
 	]
 };
@@ -92,12 +92,12 @@ const breadcrumbSchema = {
 				<nav class="breadcrumbs" aria-label="Навигация">
 					<ol>
 						<li><a href="/">Главная</a></li>
-						<li><a href="/blog">Статьи</a></li>
+						<li><a href="/blog/">Статьи</a></li>
 						<li aria-current="page">{title}</li>
 					</ol>
 				</nav>
 				<div class="article-toolbar">
-					<a href="/blog" class="back-link">
+					<a href="/blog/" class="back-link">
 						<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<path d="M19 12H5M12 19l-7-7 7-7" />
 						</svg>
@@ -111,7 +111,7 @@ const breadcrumbSchema = {
 
 				<header class="article-header">
 					<div class="meta">
-						<a href="/about" class="author-link">{AUTHOR_NAME}</a>
+						<a href="/about/" class="author-link">{AUTHOR_NAME}</a>
 						<span class="meta-sep">&middot;</span>
 						<FormattedDate date={pubDate} />
 						{updatedDate && (

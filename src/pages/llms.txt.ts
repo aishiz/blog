@@ -19,7 +19,7 @@ export async function GET(context) {
 		'',
 		'## Другое',
 		'',
-		`- [Обо мне](${new URL('/about', context.site)})`,
+		`- [Обо мне](${new URL('/about/', context.site)})`,
 		`- [RSS](${new URL('/rss.xml', context.site)})`,
 	];
 

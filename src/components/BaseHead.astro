@@ -75,6 +75,9 @@ const ogImageURL = image ? new URL(image.src, Astro.site) : new URL('/og-default
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={ogImageURL} />
+<meta property="og:image:width" content={String(image?.width ?? 1200)} />
+<meta property="og:image:height" content={String(image?.height ?? 630)} />
+<meta property="og:image:alt" content={title} />
 <meta property="og:locale" content="ru_RU" />
 {publishedTime && <meta property="article:published_time" content={publishedTime.toISOString()} />}
 {modifiedTime && <meta property="article:modified_time" content={modifiedTime.toISOString()} />}

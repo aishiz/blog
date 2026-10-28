@@ -62,6 +62,11 @@ const websiteSchema = {
 	<head>
 		<BaseHead title={`${SITE_TITLE} — Блог об AI, LLM и ML Inference`} description="Блог Артемия об AI-агентах, LLM, ML Inference и квантизации моделей. Статьи, заметки и практический опыт работы с большими языковыми моделями.">
 			<script type="application/ld+json" set:html={JSON.stringify(websiteSchema)} />
+			<script is:inline>
+				// Хостинг отдаёт главную с кодом 200 на любой несуществующий URL (SPA-фоллбэк).
+				// Пока это не выключено в настройках, уводим такие адреса на страницу 404 с noindex.
+				if (location.pathname !== '/' && location.pathname !== '/index.html') location.replace('/404.html');
+			</script>
 		</BaseHead>
 	</head>
 	<body>
@@ -80,13 +85,13 @@ const websiteSchema = {
 						Пишу о&nbsp;технологиях, делюсь опытом и&nbsp;шизой.
 					</p>
 					<div class="hero-actions">
-						<a href="/blog" class="cta-button">
+						<a href="/blog/" class="cta-button">
 							Все статьи
 							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
 								<path d="M5 12h14M12 5l7 7-7 7" />
 							</svg>
 						</a>
-						<a href="/about" class="secondary-button">Обо мне</a>
+						<a href="/about/" class="secondary-button">Обо мне</a>
 						<span class="post-count">{allPosts.length} {allPosts.length === 1 ? 'статья' : allPosts.length < 5 ? 'статьи' : 'статей'}</span>
 					</div>
 				</div>
@@ -107,7 +112,7 @@ const websiteSchema = {
 			<section class="recent-posts" aria-label="Свежая статья">
 				<div class="section-header">
 					<h2>Свежее</h2>
-					<a href="/blog" class="see-all">Смотреть все &rarr;</a>
+					<a href="/blog/" class="see-all">Смотреть все &rarr;</a>
 				</div>
 				<div class="posts-grid">
 					{featured && (
@@ -146,7 +151,7 @@ const websiteSchema = {
 			<section class="recent-posts" aria-label="Ещё статьи">
 				<div class="section-header">
 					<h2>Ещё статьи</h2>
-					<a href="/blog" class="see-all">Смотреть все &rarr;</a>
+					<a href="/blog/" class="see-all">Смотреть все &rarr;</a>
 				</div>
 				<div class="posts-grid">
 					{recentRest.map((post) => (
