@@ -10,6 +10,7 @@ import Callout from '../../components/article/Callout.astro';
 import QuantCard from '../../components/article/QuantCard.astro';
 import StepList from '../../components/article/StepList.astro';
 import Mermaid from '../../components/article/Mermaid';
+import PiiMaskingPlayground from '../../components/article/PiiMaskingPlayground';
 
 Ну чё, малютки, признавайтесь: кто хоть раз кидал в чатик с LLM кусок лога с боевым токеном? Или письмо клиента с его телефоном и картой — «перепиши повежливее»? Всё это уезжает провайдеру, оседает в логах на чужой стороне, а у безопасников дёргается глаз. А если у тебя ещё и агенты сами собирают контекст из базы и тикетов — ты вообще не контролируешь, что улетает в промпт.
 
@@ -58,6 +59,10 @@ Precision 99.9% на hivetrace/pii-bench — выше, чем у ML-пайпла
 	{ num: "4", text: "<strong>Fail-open.</strong> Любая внутренняя ошибка пропускает трафик, а не кладёт его. Запросы никогда не блокируются — сервис только маскирует." },
 	{ num: "5", text: "<strong>Российские PII.</strong> СНИЛС/ИНН/ОГРН с контрольными суммами — из западных тулов такого нет ни у кого." },
 ]} />
+
+Покрути живую модель пайплайна прямо здесь — впиши свои данные или переключи режим с `enforce` на теневой `detect`:
+
+<PiiMaskingPlayground client:visible />
 
 ---
 

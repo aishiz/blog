@@ -11,6 +11,7 @@ import QuantCard from '../../components/article/QuantCard.astro';
 import MemoryBar from '../../components/article/MemoryBar.astro';
 import StepList from '../../components/article/StepList.astro';
 import VramCalculator from '../../components/article/VramCalculator';
+import QuantizationPlayground from '../../components/article/QuantizationPlayground';
 
 Ну чё, малютки, думаете что для запуска **LLaMA 3 70B** вам нужна серверная стойка за лярд рублей? Поздравляю, вас обманули маркетологи GPU-вендоров. Модели с сотнями миллиардов параметров — **LLaMA 3 70B**, **DeepSeek-V3** с его 671 лярдом параметров — жрут VRAM как не в себя. Но есть способ запихнуть это всё в обычную потребительскую видюху.
 
@@ -91,6 +92,10 @@ _Представь, что ты сжимаешь фотку в JPEG. Пиксе
 </Callout>
 
 ![Ошибка квантизации при разной точности](../../assets/quantization/06_quantization_error.png)
+
+Попробуй руками: выбери слой с одним весом-выбросом и посмотри, как `INT4` в per-tensor убивает точность мелких весов — а потом включи `Group-wise`:
+
+<QuantizationPlayground client:visible />
 
 ---
 

@@ -9,6 +9,7 @@ heroImage: '../../assets/build-coding-agent/cover.png'
 import Callout from '../../components/article/Callout.astro';
 import StepList from '../../components/article/StepList.astro';
 import AgentLoopVisualizer from '../../components/article/AgentLoopVisualizer';
+import SandboxEscapeTester from '../../components/article/SandboxEscapeTester';
 
 Ну чё, малютки, «агент» — это не магия, не фреймворк и не отдельная сущность, которую надо покупать по подписке. Это `while`-цикл вокруг вызова LLM с парой лишних телодвижений. В этой статье соберём мини-Claude-Code с нуля: голый Python, `openai` SDK и никаких LangChain/CrewAI/АвтоГенов между тобой и происходящим. К концу у тебя будет агент, который сам находит баг в коде, чинит его и гоняет тесты, пока они не позеленеют.
 
@@ -190,6 +191,10 @@ IMPL = {
 ```
 
 `_safe` — это одна строка, которая решает всё: `is_relative_to(WORKDIR)` не даёт агенту выйти за пределы песочницы через `../../etc/passwd` или абсолютный путь. `IMPL` — реестр «имя тула → функция», по нему луп будет находить, что реально вызвать, когда модель попросит тул по имени.
+
+Проверь сам, какие попытки побега `_safe` реально отбивает — а где `run_shell` спокойно обходит её целиком:
+
+<SandboxEscapeTester client:visible />
 
 Модели про эти тулы нужно рассказать той же JSON-схемой, что и `read_file` в прошлой части — просто повторяем паттерн для оставшихся трёх и получаем весь `TOOLS`:
 

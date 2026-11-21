@@ -10,6 +10,7 @@ import QuantCard from '../../components/article/QuantCard.astro';
 import StepList from '../../components/article/StepList.astro';
 import Mermaid from '../../components/article/Mermaid';
 import KvRoutingDemo from '../../components/article/KvRoutingDemo';
+import DisaggPoolSim from '../../components/article/DisaggPoolSim';
 
 Ну чё, малютки, vLLM и SGLang вы уже щупали — они шикарно гоняют модель на одной-двух видяхах. А теперь вопрос на засыпку: у тебя **64 GPU на восьми нодах**, тысячи запросов в секунду, и надо чтобы всё это работало как единый организм, а не как восемь отдельных серверов, дерущихся за память. Кто этим дирижирует?
 
@@ -96,6 +97,10 @@ Dynamo — это набор слабосвязанных компонентов
 `} />
 
 Зачем так? Потому что prefill **compute-bound**, а decode **memory-bound** (подробно — в моей <a href="/blog/kv-cache/">статье про KV-кэш</a>). Когда они на одних GPU, то мешают друг другу. Разнеси их — и каждый пул масштабируется под свою нагрузку. Хочешь больше длинных промптов — добавь prefill-воркеров, не трогая decode.
+
+Покрути разбивку кластера из 8 GPU под разные типы нагрузки и сравни задержку с обычным режимом:
+
+<DisaggPoolSim client:visible />
 
 ---
 
