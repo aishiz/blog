@@ -81,15 +81,52 @@ interface Talk {
 
 const TALKS: Talk[] = [
 	{
+		title: 'Evolution Foundation Models — LLM и AI-модели как сервис',
+		event: 'ГигаКонф 2026 · Открытый инженерный день',
+		year: '2026',
+		kind: 'conf',
+		kindLabel: 'Конференция',
+		accent: 'var(--cat-models)',
+		desc: 'Как устроен сервис для работы с open-source LLM, что мы делаем, чтобы выдерживать более миллиона токенов в секунду, реальные графики и прикладные кейсы.',
+		primaryUrl: 'https://gigaconf.ru/program',
+		primaryLabel: 'Программа ГигаКонф',
+		secondaryUrl: 'https://hbekcloeqy.a.trbcdn.net/common/assets/sberlabs/ii_instrumenti_14_30.pdf',
+		secondaryLabel: 'Презентация (PDF)',
+	},
+	{
 		title: 'Что нового в Evolution AI Factory',
 		event: 'GoCloud 2026 · Cloud.ru',
 		year: '2026',
 		kind: 'conf',
 		kindLabel: 'Конференция',
 		accent: 'var(--accent)',
-		desc: 'Совместно с Дмитрием Юдиным (Head of AI в Cloud.ru): апдейты платформы AI Factory — новые модели, агенты, Managed RAG и экономика инференса.',
+		desc: 'Апдейты платформы Cloud.ru Evolution AI Factory: новые модели, AI-агенты, Managed RAG и экономика инференса в проде.',
 		primaryUrl: 'https://cloud.ru/gocloud/program',
 		primaryLabel: 'Программа GoCloud',
+	},
+	{
+		title: 'Экосистема сервисов для работы с LLM и AI-агентами',
+		event: 'AI Journey 2025 · AIJ Deep Dive',
+		year: '2025',
+		kind: 'conf',
+		kindLabel: 'Конференция',
+		accent: 'var(--cat-fundament)',
+		desc: 'Выступление в треке AIJ Deep Dive (Cross-Industrial AI): как устроена облачная экосистема сервисов Cloud.ru для работы с LLM, AI-агентами и GenAI-пайплайнами.',
+		primaryUrl: 'https://vkvideo.ru/video-22522055_456247072',
+		primaryLabel: 'Смотреть в VK Видео',
+	},
+	{
+		title: 'Мультиагентные системы нового поколения',
+		event: 'GigaConf 2025 · Cloud AI Architecture',
+		year: '2025',
+		kind: 'conf',
+		kindLabel: 'Конференция',
+		accent: 'var(--cat-tools)',
+		desc: 'Проблемы поддержки, версионирования и тестирования AI-агентов в проде и то, как на платформе Cloud.ru Evolution реализовано создание собственных AI-агентов.',
+		primaryUrl: 'https://vkvideo.ru/video-22522055_456245831',
+		primaryLabel: 'Смотреть в VK Видео',
+		secondaryUrl: 'https://drive.google.com/file/d/1c-Vi_eoxd5fsXwn5K8Ivbk1C80tr76pc/view?usp=share_link',
+		secondaryLabel: 'Презентация',
 	},
 	{
 		title: 'Как мы приручили мультиагентный хаос с A2A',
@@ -339,7 +376,7 @@ const breadcrumbSchema = {
 						<span class="label">Сцена и микрофон</span>
 						<h2>Выступления, доклады и подкасты</h2>
 						<p class="section-sub">
-							GoCloud, AI DevTools Conf, митапы Cloud.ru и Selectel, плюс подкаст — всё про запуск LLM, GPU, A2A и мультиагентные системы в проде.
+							AI Journey, ГигаКонф, GoCloud, AI DevTools Conf, митапы Cloud.ru и Selectel, плюс подкаст — всё про запуск LLM, GPU, A2A и мультиагентные системы в проде.
 						</p>
 					</div>
 					<div class="talks-filters" role="group" aria-label="Фильтр выступлений">
