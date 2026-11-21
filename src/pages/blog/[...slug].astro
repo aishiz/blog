@@ -3,20 +3,73 @@ import { type CollectionEntry, getCollection, render } from 'astro:content';
 import BlogPost from '../../layouts/BlogPost.astro';
 
 export async function getStaticPaths() {
+	const STOP_WORDS = new Set([
+		'как', 'что', 'это', 'для', 'или', 'при', 'без', 'под', 'над', 'про', 'через', 'после',
+		'его', 'она', 'они', 'них', 'все', 'всё', 'вот', 'тут', 'там', 'где', 'кто', 'чем',
+		'почему', 'когда', 'если', 'тоже', 'только', 'очень', 'просто', 'разбираю', 'разбираем',
+		'разбор', 'статья', 'модель', 'модели', 'моделей', 'llm', 'the', 'and', 'for', 'with',
+		'how', 'why', 'from', 'into', 'your',
+	]);
+
+	const tokenize = (text: string): Set<string> =>
+		new Set(
+			text
+				.toLowerCase()
+				.replace(/[^a-zа-яё0-9-]+/gi, ' ')
+				.split(/\s+/)
+				.filter((w) => w.length >= 3 && !STOP_WORDS.has(w)),
+		);
+
 	const posts = (await getCollection('blog'))
 		.sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 
-	return posts.map((post, i) => ({
-		params: { slug: post.id },
-		props: {
-			post,
-			prevPost: posts[i + 1] ?? null,
-			nextPost: posts[i - 1] ?? null,
-			relatedPosts: post.data.category
-				? posts.filter((p) => p.id !== post.id && p.data.category === post.data.category).slice(0, 2)
-				: [],
-		},
-	}));
+	const tokensById = new Map(
+		posts.map((p) => [
+			p.id,
+			{
+				title: tokenize(p.data.title),
+				desc: tokenize(p.data.description),
+			},
+		]),
+	);
+
+	return posts.map((post, i) => {
+		const prevPost = posts[i + 1] ?? null;
+		const nextPost = posts[i - 1] ?? null;
+		const excludeIds = new Set([post.id, prevPost?.id, nextPost?.id].filter(Boolean));
+		const cur = tokensById.get(post.id)!;
+
+		// Умная перелинковка: считаем пересечение ключевых слов (title весит ×3) + бонус за рубрику,
+		// чтобы внутренний вес распределялся по всему блогу, а не только на 2 самые свежие статьи.
+		const relatedPosts = posts
+			.filter((p) => !excludeIds.has(p.id))
+			.map((cand) => {
+				const ct = tokensById.get(cand.id)!;
+				let score = post.data.category && cand.data.category === post.data.category ? 2.5 : 0;
+				for (const w of cur.title) {
+					if (ct.title.has(w)) score += 3;
+					else if (ct.desc.has(w)) score += 1.5;
+				}
+				for (const w of cur.desc) {
+					if (ct.title.has(w)) score += 1.5;
+					else if (ct.desc.has(w)) score += 0.6;
+				}
+				return { post: cand, score };
+			})
+			.sort((a, b) => b.score - a.score || b.post.data.pubDate.valueOf() - a.post.data.pubDate.valueOf())
+			.slice(0, 4)
+			.map((x) => x.post);
+
+		return {
+			params: { slug: post.id },
+			props: {
+				post,
+				prevPost,
+				nextPost,
+				relatedPosts,
+			},
+		};
+	});
 }
 
 interface Props {

@@ -25,6 +25,7 @@
 	--radius-sm: 10px;
 	--shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
 	--shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+	--card-hover-shadow: 0 0 0 1px var(--accent), 0 0 24px rgba(255, 107, 43, 0.25), 0 12px 32px rgba(0, 0, 0, 0.4);
 	--transition: 0.2s ease;
 	--max-width: 760px;
 	--max-width-wide: 1060px;
@@ -62,6 +63,7 @@
 	--code-inline-bg: rgba(0, 0, 0, 0.06);
 	--shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 	--shadow-lg: 0 8px 28px rgba(0, 0, 0, 0.12);
+	--card-hover-shadow: 0 0 0 1px var(--accent), 0 6px 20px rgba(232, 93, 26, 0.14), 0 10px 28px rgba(26, 26, 46, 0.08);
 }
 
 * {
@@ -130,7 +132,7 @@ code {
 	border-radius: 6px;
 	font-size: 0.85em;
 	font-family: 'JetBrains Mono Variable', 'Fira Code', 'Cascadia Code', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
-	color: var(--accent-yellow);
+	color: var(--accent-yellow-text);
 }
 
 /* GitHub-style code block wrapper — injected by JS */
@@ -360,12 +362,13 @@ body::-webkit-scrollbar-thumb:hover {
 		display: block;
 		overflow-x: auto;
 		-webkit-overflow-scrolling: touch;
-		white-space: nowrap;
 	}
 
 	th, td {
 		padding: 0.55em 0.75em;
 		font-size: 0.88rem;
+		min-width: 120px;
+		white-space: normal;
 	}
 
 	pre {

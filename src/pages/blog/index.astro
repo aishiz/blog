@@ -103,21 +103,49 @@ const collectionSchema = {
 			</div>
 
 			<script>
-				const chips = document.querySelectorAll<HTMLElement>('.filter-chip');
-				const wraps = document.querySelectorAll<HTMLElement>('.card-wrap');
+				const chips = Array.from(document.querySelectorAll<HTMLElement>('.filter-chip'));
+				const wraps = Array.from(document.querySelectorAll<HTMLElement>('.card-wrap'));
+
+				function applyCategory(cat: string, pushUrl = true) {
+					chips.forEach((c) => c.classList.toggle('active', (c.dataset.cat ?? '') === cat));
+
+					const visible: HTMLElement[] = [];
+					wraps.forEach((w) => {
+						const match = !cat || w.dataset.category === cat;
+						w.style.display = match ? '' : 'none';
+						if (match) visible.push(w);
+					});
+
+					// Пересчитываем широкие карточки по видимым элементам, чтобы при фильтрации
+					// не оставалось «сиротливых» пустых дыр в 2-колоночной сетке.
+					visible.forEach((w, idx) => {
+						const shouldSpan = !cat ? idx === 0 || (idx > 0 && idx % 5 === 0) : idx === 0 && visible.length >= 3;
+						w.classList.toggle('wrap-featured', shouldSpan);
+						const card = w.querySelector('.card');
+						if (card) card.classList.toggle('featured', shouldSpan);
+					});
+
+					if (pushUrl) {
+						const url = new URL(window.location.href);
+						if (cat) url.searchParams.set('cat', cat);
+						else url.searchParams.delete('cat');
+						history.replaceState(null, '', url.toString());
+					}
+				}
+
 				chips.forEach((chip) => {
 					chip.addEventListener('click', (e) => {
 						// ponytail: чипы — реальные ссылки на /blog/category/* для краулеров,
 						// но с JS фильтруем на месте вместо перехода — быстрее для пользователя.
 						e.preventDefault();
-						chips.forEach((c) => c.classList.remove('active'));
-						chip.classList.add('active');
-						const cat = chip.dataset.cat ?? '';
-						wraps.forEach((w) => {
-							w.style.display = !cat || w.dataset.category === cat ? '' : 'none';
-						});
+						applyCategory(chip.dataset.cat ?? '', true);
 					});
 				});
+
+				const initialCat = new URLSearchParams(window.location.search).get('cat');
+				if (initialCat && chips.some((c) => c.dataset.cat === initialCat)) {
+					applyCategory(initialCat, false);
+				}
 			</script>
 		</main>
 		<Footer />

@@ -6,6 +6,7 @@ import BlogCard from '../components/BlogCard.astro';
 import Footer from '../components/Footer.astro';
 import Header from '../components/Header.astro';
 import ScrollToTop from '../components/ScrollToTop.astro';
+import { CATEGORIES as CATEGORY_DEFS } from '../data/categories';
 import { SITE_DESCRIPTION, SITE_TITLE } from '../consts';
 import avatar from '../assets/photo_2026-02-11_16-09-08.jpg';
 
@@ -22,19 +23,40 @@ function formatDate(d: Date) {
 	return d.toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+function pluralPosts(n: number) {
+	const mod100 = n % 100;
+	const mod10 = n % 10;
+	if (mod100 >= 11 && mod100 <= 19) return `${n} статей`;
+	if (mod10 === 1) return `${n} статья`;
+	if (mod10 >= 2 && mod10 <= 4) return `${n} статьи`;
+	return `${n} статей`;
+}
+
+const CAT_VAR: Record<string, string> = {
+	'фундамент': '--cat-fundament',
+	'тулы': '--cat-tools',
+	'модели': '--cat-models',
+	'хайп': '--cat-hype',
+};
+
+const categoriesWithCount = CATEGORY_DEFS.map((c) => ({
+	...c,
+	count: allPosts.filter((p) => p.data.category === c.key).length,
+}));
+
 const featured = allPosts[0];
 const rest = allPosts.slice(1);
 const recentRest = rest.slice(0, 4);
 
-// «База» — закреплённые фундаментальные статьи для входа в тему
-const STARTER_SLUGS = ['kv-cache', 'llm-quantization', 'moe-explained'];
+// «База» — закреплённый маршрут входа в тему: от одного токена к KV-кэшу, квантизации и агентам
+const STARTER_SLUGS = ['how-llm-generates-token', 'kv-cache', 'llm-quantization', 'agent-harness'];
 const starterPosts = STARTER_SLUGS
 	.map((slug) => allPosts.find((p) => p.id === slug))
 	.filter(Boolean) as typeof allPosts;
 
 const MARQUEE_TOPICS = [
 	'KV-КЭШ', 'MoE', 'КВАНТИЗАЦИЯ', 'АГЕНТЫ', 'ИНФЕРЕНС', 'VLLM',
-	'STRUCTURED OUTPUTS', 'GPU', 'ТОКЕНЫ', 'ШИЗА',
+	'LLM GATEWAY', 'A2A & MCP', 'GPU', 'ТОКЕНЫ', 'ШИЗА',
 ];
 
 const websiteSchema = {
@@ -47,11 +69,11 @@ const websiteSchema = {
 	"author": {
 		"@type": "Person",
 		"name": "Артемий Мазаев",
-		"url": `${Astro.site}about`
+		"url": new URL('/about/', Astro.site).toString()
 	},
 	"potentialAction": {
 		"@type": "SearchAction",
-		"target": `${Astro.site}blog?q={search_term_string}`,
+		"target": `${Astro.site}blog/?q={search_term_string}`,
 		"query-input": "required name=search_term_string"
 	}
 };
@@ -92,7 +114,7 @@ const websiteSchema = {
 							</svg>
 						</a>
 						<a href="/about/" class="secondary-button">Обо мне</a>
-						<span class="post-count">{allPosts.length} {allPosts.length === 1 ? 'статья' : allPosts.length < 5 ? 'статьи' : 'статей'}</span>
+						<span class="post-count">{pluralPosts(allPosts.length)}</span>
 					</div>
 				</div>
 			</section>
@@ -130,21 +152,45 @@ const websiteSchema = {
 				</div>
 			</section>
 
+			<section class="categories-section" aria-label="Рубрики блога">
+				<div class="section-header">
+					<h2>Рубрики</h2>
+					<a href="/blog/" class="see-all">Весь архив &rarr;</a>
+				</div>
+				<div class="categories-grid">
+					{categoriesWithCount.map((c) => (
+						<a href={`/blog/category/${c.slug}/`} class="cat-card" style={`--cc: var(${c.varName});`}>
+							<div class="cat-head">
+								<h3>{c.title}</h3>
+								<span class="cat-count">{pluralPosts(c.count)}</span>
+							</div>
+							<p>{c.blurb}</p>
+						</a>
+					))}
+				</div>
+			</section>
+
 			<section class="starter" aria-label="С чего начать">
 				<div class="section-header">
 					<h2>База — с чего начать</h2>
 				</div>
 				<div class="starter-list">
-					{starterPosts.map((post, i) => (
-						<a href={`/blog/${post.id}/`} class="starter-row">
-							<span class="starter-num">{String(i + 1).padStart(2, '0')}</span>
-							<span class="starter-title">{post.data.title}</span>
-							<span class="starter-time">{estimateReadingTime(post.body ?? '')}</span>
-							<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-								<path d="M5 12h14M12 5l7 7-7 7" />
-							</svg>
-						</a>
-					))}
+					{starterPosts.map((post, i) => {
+						const cVar = post.data.category ? CAT_VAR[post.data.category] : undefined;
+						return (
+							<a href={`/blog/${post.id}/`} class="starter-row">
+								<span class="starter-num">{String(i + 1).padStart(2, '0')}</span>
+								<span class="starter-title">{post.data.title}</span>
+								{post.data.category && cVar && (
+									<span class="starter-cat" style={`--sc: var(${cVar})`}>{post.data.category}</span>
+								)}
+								<span class="starter-time">{estimateReadingTime(post.body ?? '')}</span>
+								<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M5 12h14M12 5l7 7-7 7" />
+								</svg>
+							</a>
+						);
+					})}
 				</div>
 			</section>
 
@@ -167,6 +213,18 @@ const websiteSchema = {
 					))}
 				</div>
 			</section>
+
+			<section class="tg-banner" aria-label="Telegram канал">
+				<div class="tg-banner-text">
+					<span class="tg-kicker">Telegram · @ai_shizz</span>
+					<h2>Короткие заметки, разборы и шиза — быстрее, чем в блоге</h2>
+					<p>Новые статьи, ночные бенчмарки vLLM, обзоры моделей и честные выводы без маркетинговой воды.</p>
+				</div>
+				<a href="https://t.me/ai_shizz" target="_blank" rel="noopener" class="cta-button tg-btn">
+					<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>
+					Подписаться
+				</a>
+			</section>
 		</main>
 		<Footer />
 	</body>
@@ -174,9 +232,30 @@ const websiteSchema = {
 
 <style>
 	main {
+		position: relative;
 		max-width: var(--max-width-wide);
 		margin: 0 auto;
 		padding: 0 2rem;
+	}
+
+	/* Амбиентное свечение за шапкой — как на about.astro */
+	main::before {
+		content: "";
+		position: absolute;
+		top: -80px;
+		left: 0;
+		right: 0;
+		height: 760px;
+		z-index: 0;
+		pointer-events: none;
+		background:
+			radial-gradient(42% 38% at 22% 5%, rgba(255, 107, 43, 0.13), transparent 62%),
+			radial-gradient(42% 38% at 78% 10%, rgba(201, 70, 255, 0.12), transparent 62%);
+	}
+
+	main > * {
+		position: relative;
+		z-index: 1;
 	}
 
 	/* ---- HERO ---- */
@@ -193,13 +272,38 @@ const websiteSchema = {
 		flex-shrink: 0;
 	}
 
+	.hero-avatar::before {
+		content: "";
+		position: absolute;
+		inset: -12px;
+		border-radius: 26px;
+		background: radial-gradient(120% 120% at 30% 10%, rgba(255, 107, 43, 0.28), rgba(201, 70, 255, 0.18) 50%, transparent 72%);
+		filter: blur(16px);
+		z-index: -1;
+		opacity: 0.85;
+	}
+
 	.hero-avatar img {
+		display: block;
 		position: relative;
 		width: 200px;
 		height: 200px;
 		border-radius: 20px;
 		object-fit: cover;
 		border: 2px solid var(--border-light);
+	}
+
+	.hero-avatar::after {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: 20px;
+		padding: 1.5px;
+		background: linear-gradient(150deg, var(--accent), rgba(201, 70, 255, 0.6) 55%, transparent 85%);
+		-webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		pointer-events: none;
 	}
 
 	.hero-text {
@@ -304,6 +408,7 @@ const websiteSchema = {
 		text-decoration: none;
 		transition: all 0.2s ease;
 		box-shadow: 0 4px 20px rgba(255, 107, 43, 0.2);
+		flex-shrink: 0;
 	}
 
 	.cta-button:hover {
@@ -337,6 +442,7 @@ const websiteSchema = {
 		color: var(--text-muted);
 		font-weight: 500;
 		margin-left: 0.25rem;
+		font-variant-numeric: tabular-nums;
 	}
 
 	/* ---- Бегущая строка ---- */
@@ -389,7 +495,9 @@ const websiteSchema = {
 	}
 
 	/* ---- Секции ---- */
-	.recent-posts {
+	.recent-posts,
+	.categories-section,
+	.starter {
 		padding: 0 0 2.5rem;
 	}
 
@@ -401,8 +509,20 @@ const websiteSchema = {
 	}
 
 	.section-header h2 {
+		display: flex;
+		align-items: center;
+		gap: 0.65rem;
 		font-size: 1.35rem;
 		font-weight: 800;
+	}
+
+	.section-header h2::before {
+		content: "";
+		width: 4px;
+		height: 1.05em;
+		border-radius: 4px;
+		background: linear-gradient(var(--accent), var(--accent-secondary));
+		flex-shrink: 0;
 	}
 
 	.see-all {
@@ -422,11 +542,84 @@ const websiteSchema = {
 		gap: 1.25rem;
 	}
 
-	/* ---- База ---- */
-	.starter {
-		padding: 0 0 2.5rem;
+	/* ---- Карточки рубрик ---- */
+	.categories-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 1rem;
 	}
 
+	.cat-card {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		gap: 0.45rem;
+		padding: 1.2rem 1.35rem 1.2rem 1.5rem;
+		border-radius: var(--radius);
+		background:
+			linear-gradient(135deg, color-mix(in srgb, var(--cc) 8%, transparent), transparent 55%),
+			var(--bg-card);
+		border: 1px solid var(--border);
+		text-decoration: none;
+		overflow: hidden;
+		transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+	}
+
+	.cat-card::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 0;
+		bottom: 0;
+		width: 3px;
+		background: linear-gradient(var(--cc), color-mix(in srgb, var(--cc) 35%, transparent));
+		transition: width 0.2s ease;
+	}
+
+	.cat-card:hover {
+		transform: translateY(-3px);
+		border-color: color-mix(in srgb, var(--cc) 55%, var(--border));
+		box-shadow: 0 0 0 1px color-mix(in srgb, var(--cc) 35%, transparent), 0 8px 24px color-mix(in srgb, var(--cc) 14%, transparent);
+	}
+
+	.cat-card:hover::before {
+		width: 5px;
+	}
+
+	.cat-head {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5rem;
+	}
+
+	.cat-card h3 {
+		font-size: 1.05rem;
+		font-weight: 800;
+		color: var(--text);
+		margin: 0;
+	}
+
+	.cat-count {
+		font-size: 0.7rem;
+		font-weight: 700;
+		letter-spacing: 0.03em;
+		color: var(--cc);
+		padding: 0.16rem 0.6rem;
+		border-radius: 100px;
+		background: color-mix(in srgb, var(--cc) 12%, var(--bg-secondary));
+		border: 1px solid color-mix(in srgb, var(--cc) 35%, transparent);
+		font-variant-numeric: tabular-nums;
+	}
+
+	.cat-card p {
+		margin: 0;
+		font-size: 0.86rem;
+		color: var(--text-secondary);
+		line-height: 1.55;
+	}
+
+	/* ---- База ---- */
 	.starter-list {
 		display: flex;
 		flex-direction: column;
@@ -439,7 +632,7 @@ const websiteSchema = {
 	.starter-row {
 		display: flex;
 		align-items: center;
-		gap: 1.1rem;
+		gap: 1rem;
 		padding: 0.95rem 1.4rem;
 		text-decoration: none;
 		border-bottom: 1px solid var(--border);
@@ -455,7 +648,7 @@ const websiteSchema = {
 	}
 
 	.starter-num {
-		font-size: 1.3rem;
+		font-size: 1.25rem;
 		font-weight: 900;
 		background: linear-gradient(135deg, var(--accent), var(--accent-secondary));
 		-webkit-background-clip: text;
@@ -481,10 +674,24 @@ const websiteSchema = {
 		color: var(--accent-light);
 	}
 
+	.starter-cat {
+		flex-shrink: 0;
+		font-size: 0.66rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+		padding: 0.14rem 0.55rem;
+		border-radius: 100px;
+		color: var(--sc);
+		background: color-mix(in srgb, var(--sc) 12%, transparent);
+		border: 1px solid color-mix(in srgb, var(--sc) 40%, transparent);
+	}
+
 	.starter-time {
 		font-size: 0.75rem;
 		color: var(--text-muted);
 		flex-shrink: 0;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.starter-row svg {
@@ -498,7 +705,61 @@ const websiteSchema = {
 		transform: translateX(3px);
 	}
 
+	/* ---- Telegram CTA ---- */
+	.tg-banner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1.5rem;
+		padding: 1.65rem 1.85rem;
+		margin-bottom: 1rem;
+		border-radius: var(--radius);
+		border: 1px solid color-mix(in srgb, var(--accent) 32%, var(--border));
+		background:
+			radial-gradient(60% 120% at 100% 0%, rgba(201, 70, 255, 0.12), transparent 65%),
+			linear-gradient(135deg, rgba(255, 107, 43, 0.08), transparent 55%),
+			var(--bg-card);
+	}
+
+	.tg-kicker {
+		display: inline-block;
+		font-size: 0.72rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.06em;
+		color: var(--accent-light);
+		margin-bottom: 0.3rem;
+	}
+
+	.tg-banner h2 {
+		font-size: 1.22rem;
+		font-weight: 800;
+		margin-bottom: 0.35rem;
+		line-height: 1.3;
+	}
+
+	.tg-banner p {
+		margin: 0;
+		font-size: 0.9rem;
+		color: var(--text-secondary);
+		line-height: 1.55;
+		max-width: 560px;
+	}
+
 	/* ---- RESPONSIVE ---- */
+	@media (max-width: 768px) {
+		.categories-grid,
+		.posts-grid {
+			grid-template-columns: 1fr;
+		}
+
+		.tg-banner {
+			flex-direction: column;
+			align-items: flex-start;
+			padding: 1.35rem 1.4rem;
+		}
+	}
+
 	@media (max-width: 550px) {
 		main { padding: 0 1rem; }
 
@@ -510,21 +771,23 @@ const websiteSchema = {
 		}
 
 		.hero-avatar img { width: 140px; height: 140px; border-radius: 16px; }
+		.hero-avatar::after { border-radius: 16px; }
 		.hero-text h1 { font-size: 1.85rem; }
 		.hero-text p { max-width: none; font-size: 0.95rem; }
 		.hero-actions { justify-content: center; flex-wrap: wrap; }
 		.post-count { width: 100%; text-align: center; margin-left: 0; }
-		.posts-grid { grid-template-columns: 1fr; }
 		.section-header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
 		.marquee { margin-bottom: 2rem; }
-		.starter-row { padding: 0.85rem 1rem; gap: 0.8rem; }
+		.starter-row { padding: 0.85rem 1rem; gap: 0.7rem; }
 		.starter-title { white-space: normal; font-size: 0.88rem; }
+		.starter-cat,
 		.starter-time { display: none; }
 	}
 
 	@media (max-width: 400px) {
 		.hero { padding: 2rem 0 1.5rem; gap: 1.25rem; }
 		.hero-avatar img { width: 120px; height: 120px; border-radius: 14px; }
+		.hero-avatar::after { border-radius: 14px; }
 		.hero-text h1 { font-size: 1.55rem; }
 		.hero-text p { font-size: 0.9rem; margin-bottom: 1.25rem; }
 		.hero-badge { font-size: 0.7rem; padding: 0.2rem 0.65rem; margin-bottom: 0.65rem; }
@@ -536,7 +799,7 @@ const websiteSchema = {
 	@media (min-width: 551px) and (max-width: 768px) {
 		.hero { gap: 2rem; }
 		.hero-avatar img { width: 160px; height: 160px; border-radius: 18px; }
+		.hero-avatar::after { border-radius: 18px; }
 		.hero-text h1 { font-size: 2rem; }
-		.posts-grid { grid-template-columns: 1fr; }
 	}
 </style>
